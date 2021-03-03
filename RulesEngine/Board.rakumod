@@ -1,6 +1,5 @@
 use Terminal::ANSIColor;
 
-use lib '.';
 use Piece;
 use Action;
 
@@ -9,6 +8,7 @@ unit class Board;
 enum BoardType < Default >;
 
 has BoardType $.type = Default;
+has Bool $!is-clone = False;
 # rank-major (i.e. row-major), later rows closer to black side to align with how coordinates work
 has Piece @!board[8;8];
 has Bool $.is-game-ended;
@@ -27,21 +27,25 @@ constant %roll-needed-for =
 	;
 
 submethod TWEAK {
-	if $!type == Default {
+	if $!type == Default && ! $!is-clone {
 		for Archer, Knight, Pikeman, Queen, King, Pikeman, Knight, Archer {
 			state $file = 0;
-			@!board[0][$file] = Piece.new: type => $_, team => White;
-			@!board[7][$file] = Piece.new: type => $_, team => Black;
+			@!board[0;$file] = Piece.new: type => $_, team => White;
+			@!board[7;$file] = Piece.new: type => $_, team => Black;
 			$file++;
 		}
 
 		for ^8 -> $file {
-			@!board[1][$file] = Piece.new: type => Infantry, team => White;
-			@!board[1][$file] = Piece.new: type => Infantry, team => Black;
+			@!board[1;$file] = Piece.new: type => Infantry, team => White;
+			@!board[6;$file] = Piece.new: type => Infantry, team => Black;
 		}
 
 		$!whose-turn = White;
 	}
+}
+
+method clone {
+	
 }
 
 multi sub indices-to-coord(UInt $rank, UInt $file) returns CoOrd {
@@ -49,23 +53,23 @@ multi sub indices-to-coord(UInt $rank, UInt $file) returns CoOrd {
 
 	return %translation-of{$file} ~ $rank + 1;
 }
-multi sub indices-to-coord($list where *.elems == 2) return CoOrd {
+multi sub indices-to-coord($list where *.elems == 2) returns CoOrd {
 	indices-to-coord($list[0], $list[1])
 }
 
-sub coord-to-indices(CoOrd $pos) return Seq {
+sub coord-to-indices(CoOrd $pos) returns Seq {
 	state %translation-of = 'a'..'h' Z=> ^8;
 
-	my [$file, $rank] = $pos.comb;
+	my ($file, $rank) = $pos.comb;
 	return $rank - 1, %translation-of{$file};
 }
 
 multi method piece-at(Board:D: CoOrd $pos) returns Piece {
 	my ($rank, $file) = coord-to-indices $pos;
-	return Board[$rank][$file];
+	return @!board[$rank;$file];
 }
 multi method piece-at(Board:D: $rank, $file) returns Piece {
-	return Board[$rank][$file];
+	return @!board[$rank;$file];
 }
 
 method actions-for(Board:D: CoOrd $pos) {
@@ -80,7 +84,8 @@ method actions-for(Board:D: CoOrd $pos) {
 
 	given $piece.type {
 		when King | Queen | Knight {
-			my SetHash[Action] ($final, $working) = SetHash.new xx 2;
+			# my SetHash[Action] ($final, $working) = SetHash.new xx 2;
+			my SetHash ($final, $working) = SetHash.new xx 2;
 			
 			# Keep this around to remove it later
 			my Action $trivial-action .= new: :to($pos), :from($pos), :type(Move);
@@ -151,11 +156,11 @@ method actions-for(Board:D: CoOrd $pos) {
 
 			# Easier (and probably more efficient) to just iterate over the board in this case
 			for ^8 X ^8 -> ($rank, $file) {
-				my $_ = @board[$rank][$file];
+				$_ = @!board[$rank;$file];
 				if .defined && .team != $piece.team {
 					if (($rank, $file) Z- @pos-indices).map(&abs).sum ≤ 3 {
 						@actions.push: Action.new: :from($pos),
-								:attacking(indices-to-coord $rank, file), :type(Capture);
+								:attacking(indices-to-coord $rank, $file), :type(Capture);
 					}
 				}
 			}
@@ -165,6 +170,92 @@ method actions-for(Board:D: CoOrd $pos) {
 	return @actions;
 }
 
-method gist {
-	colored(@!board.reverse.map(*».gist.join(' ')).join("\n"), 'on_255,212,128')
+method apply-action(Action $action) returns Action {
+	sub move($from, $to) {
+		my ($from_rank, $from_file) = coord-to-indices $from;
+		my ($to_rank, $to_file) = coord-to-indices $to;
+		@!board[$to_rank;$to_file] = @!board[$from_rank;$from_file];
+		@!board[$from_rank;$from_file] = Nil;
+	}
+
+	given $action.type {
+		when Move {
+			move $action.from, $action.to;
+		}
+		
+		my $roll = (1..6).roll;
+		my PieceType ($attacker, $defender) =
+				self.piece-at($action.from).type,
+				self.piece-at($action.to).type;
+
+		my $was-successful = $roll ≥ %roll-needed-for{$attacker}.to-capture($defender);
+
+		when Capture {
+			move $action.from, $action.attacking if $was-successful;
+
+			return Action.new:
+					from      => $action.from,
+					attacking => $action.attacking,
+					type      => Capture,
+					:$was-successful
+					;
+			
+		}
+
+		when MoveCapture {
+			if $was-successful {
+				move $action.from, $action.attacking;
+			}
+			else {
+				move $action.from, $action.to;
+			}
+
+			return Action.new:
+					from      => $action.from,
+					attacking => $action.attacking,
+					to        => $action.to,
+					type      => MoveCapture,
+					:$was-successful
+					;
+		}
+	}
+}
+
+method end-turn {
+	$!whose-turn = $!whose-turn == White ?? Black !! White;
+}
+
+method Str {
+	my $str = '';
+	my $empties = 0;
+	for @!board.flat {
+		if .defined {
+			if $empties {
+				$str ~= $empties;
+				$empties = 0;
+			}
+			$str ~= .Str;
+		}
+		else {
+			$empties++;
+		}
+	}
+
+	if $empties {
+		$str ~= $empties;
+		$empties = 0;
+	}
+
+	return $str;
+}
+
+multi method gist(Board:D:) {
+	my @board = @!board;
+	@board.rotor(8)
+		.reverse
+		.map({ colored $_».gist.join(' '), 'on_255,212,128' })
+		.join("\n");
+}
+multi method gist(Board:U:) {
+	'Nil'
 }

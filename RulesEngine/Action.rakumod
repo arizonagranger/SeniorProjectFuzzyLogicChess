@@ -5,7 +5,7 @@ subset CoOrd is export where * ~~ / ^ <CoOrdFormat> $ /;
 enum ActionType is export < Capture Move MoveCapture >;
 
 has CoOrd $.from is required;
-has CoOrd $.to, $.attacking;
+has CoOrd ($.to, $.attacking);
 has ActionType $.type is required;
 has Bool $.was-successful;
 
@@ -32,7 +32,7 @@ method Str(Action:D:) {
 }
 
 # TODO: error messages
-method from-str(Action:U: Str $s) return Action {
+method from-str(Action:U: Str $s) returns Action {
 	return Nil unless $s ~~ /
 		^
 		$<from>=<CoOrdFormat>

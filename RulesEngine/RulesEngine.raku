@@ -12,45 +12,58 @@ my Board $board;
 my Board @saved-states;
 
 my $application = route {
-	get 'new-game', :$color = 'White', :$type='Default' {
+	get -> 'new-game', :$color = 'White', :$type='Default' {
+		$board .= new;
 		content 'text/plain', $board.Str;
 	}
 
 	# -----  Queries  -----
 
-	get 'piece-at', Board::CoOrd :$coord {
-		# TODO
+	get -> 'piece-at', CoOrd :$coord! {
+		content 'text/plain', $board.piece-at($coord).Str;
 	}
 
-	get 'moves-for', Board::CoOrd :$coord {
-		# TODO
+	get -> 'actions-for', CoOrd :$coord! {
+		content 'text/plain', $board.actions-for($coord).join("\n");
 	}
 
-	get 'is-done' {
-		content 'text/plain', $board.is-game-ended;
+	get -> 'is-done' {
+		content 'text/plain', $board.is-game-ended.Str;
 	}
 
-	get 'whose-turn {
-		content 'text/plain', $board.whose-turn;
+	get -> 'whose-turn' {
+		content 'text/plain', $board.whose-turn.Str;
 	}
 
 
 	# -----  Actions  -----
 
-	post 'act', :$action {
-		# TODO
+	post -> 'act', :$action-str {
+		my Action $action .= from-str: $action-str;
+		with $action {
+			# TODO check that the action is valid for whose turn it is (probably implemented in Board)
+			content 'text/plain', $board.apply-action($action).Str;
+		}
+		else {
+			bad-request;
+		}
 	}
 
-	post 'end-turn' {
-		# TODO
+	post -> 'end-turn' {
+		$board.end-turn;
 	}
 
-	post 'save-state' {
-		# TODO
+	post -> 'save-state' {
+		@saved-states.push: $board.clone;
 	}
 
-	post 'restore-state' {
-		# TODO
+	post -> 'restore-state' {
+		if @saved-states.elems == 0 {
+			response.status = 409;
+		}
+		else {
+			$board = @saved-states.pop;
+		}
 	}
 };
 
@@ -62,7 +75,13 @@ my Cro::Service $service = Cro::HTTP::Server.new:
 
 $service.start;
 
-react whenever signal(SIGINT) {
-	$service.stop;
-	exit;
+for $*IN.lines {
+	when 'v' {
+		say $board;
+	}
+
+	when 'e' {
+		$service.stop;
+		exit;
+	}
 }
