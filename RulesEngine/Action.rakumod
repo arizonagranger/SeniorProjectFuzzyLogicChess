@@ -1,7 +1,7 @@
 unit class Action;
 
 my regex CoOrdFormat { <[a..h]> <[1..8]> };
-subset CoOrd is export where * ~~ / ^ <CoOrdFormat> $ /;
+subset CoOrd is export where / ^ <CoOrdFormat> $ / | Nil;
 enum ActionType is export < Capture Move MoveCapture >;
 
 has CoOrd $.from is required;
@@ -16,9 +16,9 @@ method Str(Action:D:) {
 		}
 
 		my $result =
-			   !defined $!was-successful ?? '?'
-			!! $!was-successful          ?? 's'
-			!!                              'f'
+			   (!defined $!was-successful) ?? '?'
+			!! $!was-successful            ?? 's'
+			!!                                'f'
 			;
 
 		when Capture {

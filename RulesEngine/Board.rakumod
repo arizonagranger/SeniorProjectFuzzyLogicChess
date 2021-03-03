@@ -11,7 +11,7 @@ has BoardType $.type = Default;
 has Bool $!is-clone = False;
 # rank-major (i.e. row-major), later rows closer to black side to align with how coordinates work
 has Piece @!board[8;8];
-has Bool $.is-game-ended;
+has Bool $.is-game-ended = False;
 has Piece::Team $.whose-turn;
 
 role Capturer {
@@ -190,7 +190,7 @@ method apply-action(Action $action) returns Action {
 		my $roll = (1..6).roll;
 		my PieceType ($attacker, $defender) =
 				self.piece-at($action.from).type,
-				self.piece-at($action.to).type;
+				self.piece-at($action.attacking).type;
 
 		my $was-successful = $roll ≥ %roll-needed-for{$attacker}.to-capture($defender);
 

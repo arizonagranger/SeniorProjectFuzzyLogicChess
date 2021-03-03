@@ -40,7 +40,6 @@ my $application = route {
 
 	post -> 'act', :$action-str! {
 		my Action $action .= from-str: $action-str;
-		say '$action-str = ', $action-str, ', $action defined = ', defined $action;
 		with $action {
 			# TODO check that the action is valid for whose turn it is (probably implemented in Board)
 			content 'text/plain', $board.apply-action($action).Str;
