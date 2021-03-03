@@ -49,7 +49,7 @@ method clone {
 }
 
 multi sub indices-to-coord(UInt $rank, UInt $file) returns CoOrd {
-	state %translation-of = ^8 Z=> 'a'..'h';
+	my %translation-of = ^8 Z=> 'a'..'h';
 
 	return %translation-of{$file} ~ $rank + 1;
 }
@@ -57,8 +57,8 @@ multi sub indices-to-coord($list where *.elems == 2) returns CoOrd {
 	indices-to-coord($list[0], $list[1])
 }
 
-sub coord-to-indices(CoOrd $pos) returns Seq {
-	state %translation-of = 'a'..'h' Z=> ^8;
+sub coord-to-indices(CoOrd $pos) returns List {
+	my %translation-of = 'a'..'h' Z=> ^8;
 
 	my ($file, $rank) = $pos.comb;
 	return $rank - 1, %translation-of{$file};
@@ -68,12 +68,12 @@ multi method piece-at(Board:D: CoOrd $pos) returns Piece {
 	my ($rank, $file) = coord-to-indices $pos;
 	return @!board[$rank;$file];
 }
-multi method piece-at(Board:D: $rank, $file) returns Piece {
+multi method piece-at(Board:D: [$rank, $file]) returns Piece {
 	return @!board[$rank;$file];
 }
 
 method actions-for(Board:D: CoOrd $pos) {
-	constant @deltas = (-1, 0, 1 X -1, 0, 1).grep: * !eqv (0, 0);
+	my @deltas = (-1, 0, 1 X -1, 0, 1).grep: * !eqv (0, 0);
 
 	my Piece $piece = self.piece-at: $pos;
 
@@ -96,8 +96,8 @@ method actions-for(Board:D: CoOrd $pos) {
 				my $old-working = $working.SetHash; # copy
 				for $working.keys.map(*.to) -> $working-coord {
 					my @adjacents = @deltas
-						.map(* Z+ coord-to-indices $working-coord) # add deltas to starting pos
-						.grep({ 0 <= all($_) <= 7 })               # keep only coords within bounds
+						.map({ @$_ Z+ coord-to-indices $working-coord }) # add deltas to starting pos
+						.grep({ 0 <= all($_) <= 7 })                     # keep only coords within bounds
 						;
 					for @adjacents -> $possible {
 						my Piece $adjacent-piece = self.piece-at: $possible;
@@ -130,12 +130,12 @@ method actions-for(Board:D: CoOrd $pos) {
 		}
 
 		my @pos-indices = coord-to-indices $pos;
-		my @adjacents = @deltas.map(* Z+ @pos-indices).grep({ 0 <= all($_) <= 7 });
+		my @adjacents = @deltas.map({ @$_ Z+ @pos-indices }).grep({ 0 <= all($_) <= 7 });
 
 		when Pikeman | Infantry {
 			my $attacking-direction = $piece.team == White ?? 1 !! -1;
 			for @adjacents -> $possible {
-				my $possible-coord = indices-to-coord $pos;
+				my $possible-coord = indices-to-coord $possible;
 				with self.piece-at: $possible {
 					if .team != $piece.team && $possible[0] - @pos-indices[0] == $attacking-direction {
 						@actions.push: Action.new: :from($pos), :attacking($possible-coord), :type(Capture);
@@ -181,6 +181,10 @@ method apply-action(Action $action) returns Action {
 	given $action.type {
 		when Move {
 			move $action.from, $action.to;
+			return Action.new:
+					from => $action.from,
+					to   => $action.to,
+					type => Move;
 		}
 		
 		my $roll = (1..6).roll;

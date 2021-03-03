@@ -33,16 +33,18 @@ method Str(Action:D:) {
 
 # TODO: error messages
 method from-str(Action:U: Str $s) returns Action {
-	return Nil unless $s ~~ /
-		^
-		$<from>=<CoOrdFormat>
-		['>' $<to>=<CoOrdFormat>]
-		['x' $<attacking>=<CoOrdFormat>
-			'=' $<was-successful>=<[? s f]> ] 
-		$
-		/;
-
-	my CoOrd ($from, $to) = $<from>.Str, $<to>.Str;
+	unless $s ~~ /
+			^
+			$<from>=<CoOrdFormat>
+			['>' $<to>=<CoOrdFormat>]?
+			['x' $<attacking>=<CoOrdFormat>
+				'=' $<was-successful>=<[? s f]> ]?
+			$
+			/
+	{
+		say 'Error parsing action string: String does not match regex.';
+		return Nil;
+	}
 
 	my ActionType $type;
 	if defined $<to> {
@@ -57,6 +59,7 @@ method from-str(Action:U: Str $s) returns Action {
 		$type = Capture;
 	}
 	else {
+		say 'Error parsing action string: Neither <to> nor <attacking> defined.';
 		return Nil;
 	}
 
@@ -65,7 +68,13 @@ method from-str(Action:U: Str $s) returns Action {
 		$was-successful = $<was-successful>.Str eq 's';
 	}
 
-	return self.bless: :$to, :$from, :$type, :$was-successful;
+	return self.bless:
+		to        => $<to>,
+		from      => $<from>,
+		attacking => $<attacking>,
+		:$type,
+		:$was-successful
+		;
 }
 
 # TODO: maybe identity needs to include the turn number depending on our future needs. For now, not the case
