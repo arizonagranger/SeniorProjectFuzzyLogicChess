@@ -8,8 +8,15 @@ enum Team is export < White Black >;
 has PieceType $.type is required;
 has Team $.team is required;
 
-# For pawns
-has Bool $.has-moved = False;
+multi method clone(Piece:D:) {
+	Piece.new:
+		type => $!type,
+		team => $!team,
+		;
+}
+multi method clone(Piece:U:) {
+	Piece
+}
 
 method gist {
 	if defined self {

@@ -1,7 +1,7 @@
 unit class Action;
 
 my regex CoOrdFormat { <[a..h]> <[1..8]> };
-subset CoOrd is export where / ^ <CoOrdFormat> $ / | Nil;
+subset CoOrd is export where Nil | / ^ <CoOrdFormat> $ /;
 enum ActionType is export < Capture Move MoveCapture >;
 
 has CoOrd $.from is required;
@@ -42,7 +42,7 @@ method from-str(Action:U: Str $s) returns Action {
 			$
 			/
 	{
-		say 'Error parsing action string: String does not match regex.';
+		say "Error parsing action string: String ($s) does not match regex.";
 		return Nil;
 	}
 
@@ -64,7 +64,8 @@ method from-str(Action:U: Str $s) returns Action {
 	}
 
 	my Bool $was-successful;
-	if $type == (Capture | MoveCapture) {
+	if $type == (Capture | MoveCapture) && $<was-successful> !eq '?' {
+		say 'mark 2';
 		$was-successful = $<was-successful>.Str eq 's';
 	}
 

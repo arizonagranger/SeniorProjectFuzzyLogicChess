@@ -7,10 +7,10 @@ unit class Board;
 
 enum BoardType < Default >;
 
+has Bool $.is-clone = False;
 has BoardType $.type = Default;
-has Bool $!is-clone = False;
 # rank-major (i.e. row-major), later rows closer to black side to align with how coordinates work
-has Piece @!board[8;8];
+has Piece @.board[8;8];
 has Bool $.is-game-ended = False;
 has Piece::Team $.whose-turn;
 
@@ -44,8 +44,21 @@ submethod TWEAK {
 	}
 }
 
-method clone {
+method clone(Board:D:) {
+	my Piece @board[8;8];
+	for ^8² {
+		@board[$_] = @!board[$_].clone;
+	}
+
+	return Board.new:
+		:is-clone,
+		type => $!type,
+		:@board,
+		is-game-ended => $!is-game-ended,
+		whose-turn => $!whose-turn
+		;
 	
+	# TODO copy data relating to delegation when we add that
 }
 
 multi sub indices-to-coord(UInt $rank, UInt $file) returns CoOrd {
@@ -91,9 +104,9 @@ method actions-for(Board:D: CoOrd $pos) {
 			my Action $trivial-action .= new: :to($pos), :from($pos), :type(Move);
 			$working.set: $trivial-action;
 
-			my $dist = $_ ~~ Knight ?? 6 !! 3; # Knights can only move 5--the 6th round is for captures only
+			my $dist = ($_ ~~ Knight) ?? 6 !! 3; # Knights can only move 5--the 6th round is for captures only
 			for 1..$dist -> $current-dist {
-				my $old-working = $working.SetHash; # copy
+				my SetHash $old-working .= new: $working.keys;
 				for $working.keys.map(*.to) -> $working-coord {
 					my @adjacents = @deltas
 						.map({ @$_ Z+ coord-to-indices $working-coord }) # add deltas to starting pos
@@ -121,11 +134,11 @@ method actions-for(Board:D: CoOrd $pos) {
 						}
 					}
 				}
-				$final.set($working.keys);
-				$working.unset($old-working.keys);
+				$final.set: $working.keys;
+				$working.unset: $old-working.keys;
 			}
 
-			$final.unset($trivial-action);
+			$final.unset: $trivial-action;
 			@actions = $final.keys.Array;
 		}
 
@@ -156,11 +169,12 @@ method actions-for(Board:D: CoOrd $pos) {
 
 			# Easier (and probably more efficient) to just iterate over the board in this case
 			for ^8 X ^8 -> ($rank, $file) {
-				$_ = @!board[$rank;$file];
-				if .defined && .team != $piece.team {
-					if (($rank, $file) Z- @pos-indices).map(&abs).sum ≤ 3 {
-						@actions.push: Action.new: :from($pos),
-								:attacking(indices-to-coord $rank, $file), :type(Capture);
+				given @!board[$rank;$file] {
+					if .defined && .team != $piece.team {
+						if (($rank, $file) Z- @pos-indices).map(&abs).sum ≤ 3 {
+							@actions.push: Action.new: :from($pos),
+									:attacking(indices-to-coord $rank, $file), :type(Capture);
+						}
 					}
 				}
 			}
@@ -187,12 +201,15 @@ method apply-action(Action $action) returns Action {
 					type => Move;
 		}
 		
-		my $roll = (1..6).roll;
-		my PieceType ($attacker, $defender) =
-				self.piece-at($action.from).type,
-				self.piece-at($action.attacking).type;
+		my $was-successful = $action.was-successful;
+		unless defined $was-successful {
+			my $roll = (1..6).roll;
+			my PieceType ($attacker, $defender) =
+					self.piece-at($action.from).type,
+					self.piece-at($action.attacking).type;
 
-		my $was-successful = $roll ≥ %roll-needed-for{$attacker}.to-capture($defender);
+			$was-successful = $roll ≥ %roll-needed-for{$attacker}.to-capture($defender);
+		}
 
 		when Capture {
 			move $action.from, $action.attacking if $was-successful;
