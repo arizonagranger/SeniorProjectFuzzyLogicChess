@@ -13,6 +13,7 @@ has BoardType $.type = Default;
 has Piece @.board[8;8];
 has Bool $.is-game-ended = False;
 has Piece::Team $.whose-turn;
+has Action @.actions;
 
 role Capturer {
 	method to-capture(Capturer:D: \key) { self.AT-KEY(key) }
@@ -50,12 +51,15 @@ method clone(Board:D:) {
 		@board[$rank;$file] = @!board[$rank;$file].clone;
 	}
 
+	my Action @actions = @!actions;
+
 	return Board.new:
 		:is-clone,
 		type => $!type,
 		:@board,
 		is-game-ended => $!is-game-ended,
-		whose-turn => $!whose-turn
+		whose-turn => $!whose-turn,
+		:@actions
 		;
 	
 	# TODO copy data relating to delegation when we add that
@@ -192,10 +196,12 @@ method apply-action(Action $action) returns Action {
 		@!board[$from_rank;$from_file] = Nil;
 	}
 
+	my $realized-action;
+
 	given $action.type {
 		when Move {
 			move $action.from, $action.to;
-			return Action.new:
+			$realized-action = Action.new:
 				from => $action.from,
 				to   => $action.to,
 				type => Move;
@@ -214,7 +220,7 @@ method apply-action(Action $action) returns Action {
 		when Capture {
 			move $action.from, $action.attacking if $was-successful;
 
-			return Action.new:
+			$realized-action = Action.new:
 				from      => $action.from,
 				attacking => $action.attacking,
 				type      => Capture,
@@ -231,7 +237,7 @@ method apply-action(Action $action) returns Action {
 				move $action.from, $action.to;
 			}
 
-			return Action.new:
+			$realized-action = Action.new:
 				from      => $action.from,
 				attacking => $action.attacking,
 				to        => $action.to,
@@ -240,6 +246,10 @@ method apply-action(Action $action) returns Action {
 				;
 		}
 	}
+
+	push @!actions: $realized-action;
+
+	return $realized-action;
 }
 
 method end-turn {

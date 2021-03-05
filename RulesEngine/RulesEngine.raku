@@ -19,6 +19,23 @@ my $application = route {
 
 	# -----  Queries  -----
 
+	get -> 'game-state' {
+		content 'text/plain', $board.Str;
+	}
+
+	get -> 'curr-action-idx' {
+		content 'text/plain', ($board.actions.elems - 1).Str;
+	}
+
+	get -> 'actions-since', UInt :$action-idx! {
+		if $action-idx ≥ $board.actions.elems {
+			response.status = 409;
+		}
+		else {
+			content 'text/plain', $board.actions[$action-idx..*].join(',');
+		}
+	}
+
 	get -> 'piece-at', CoOrd :$coord! {
 		content 'text/plain', $board.piece-at($coord).Str;
 	}
