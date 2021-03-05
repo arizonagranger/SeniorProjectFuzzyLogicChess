@@ -249,6 +249,13 @@ method apply-action(Action $action) returns Action {
 
 	push @!actions: $realized-action;
 
+	# Check if this ends the game
+	if $realized-action.type == Move | MoveCapture
+			&& $realized-action.was-successful 
+			&& self.piece-at($realized-action.attacking).type == King {
+		$!is-game-ended = True;
+	}
+
 	return $realized-action;
 }
 
