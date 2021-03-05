@@ -42,7 +42,7 @@ multi method shorthand(Piece:U:) {
 }
 
 multi method Str(Piece:D:) {
-	($!team == White ?? 'W' !! 'B') ~ self.shorthand
+	$!team == White ?? self.shorthand !! self.shorthand.lc;
 }
 multi method Str(Piece:U:) {
 	q{}

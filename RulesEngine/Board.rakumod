@@ -124,7 +124,7 @@ method actions-for(Board:D: CoOrd $pos) {
 								}
 								elsif $piece.type == Knight {
 									$final.set: Action.new: :from($pos), :to($working-coord),
-											:attacking($adjacent-coord), :type(MoveCapture);
+										:attacking($adjacent-coord), :type(MoveCapture);
 								}
 							}
 						}
@@ -173,7 +173,7 @@ method actions-for(Board:D: CoOrd $pos) {
 					if .defined && .team != $piece.team {
 						if (($rank, $file) Z- @pos-indices).map(&abs).sum ≤ 3 {
 							@actions.push: Action.new: :from($pos),
-									:attacking(indices-to-coord $rank, $file), :type(Capture);
+								:attacking(indices-to-coord $rank, $file), :type(Capture);
 						}
 					}
 				}
@@ -196,17 +196,17 @@ method apply-action(Action $action) returns Action {
 		when Move {
 			move $action.from, $action.to;
 			return Action.new:
-					from => $action.from,
-					to   => $action.to,
-					type => Move;
+				from => $action.from,
+				to   => $action.to,
+				type => Move;
 		}
 		
 		my $was-successful = $action.was-successful;
 		unless defined $was-successful {
 			my $roll = (1..6).roll;
 			my PieceType ($attacker, $defender) =
-					self.piece-at($action.from).type,
-					self.piece-at($action.attacking).type;
+				self.piece-at($action.from).type,
+				self.piece-at($action.attacking).type;
 
 			$was-successful = $roll ≥ %roll-needed-for{$attacker}.to-capture($defender);
 		}
@@ -215,11 +215,11 @@ method apply-action(Action $action) returns Action {
 			move $action.from, $action.attacking if $was-successful;
 
 			return Action.new:
-					from      => $action.from,
-					attacking => $action.attacking,
-					type      => Capture,
-					:$was-successful
-					;
+				from      => $action.from,
+				attacking => $action.attacking,
+				type      => Capture,
+				:$was-successful
+				;
 			
 		}
 
@@ -232,12 +232,12 @@ method apply-action(Action $action) returns Action {
 			}
 
 			return Action.new:
-					from      => $action.from,
-					attacking => $action.attacking,
-					to        => $action.to,
-					type      => MoveCapture,
-					:$was-successful
-					;
+				from      => $action.from,
+				attacking => $action.attacking,
+				to        => $action.to,
+				type      => MoveCapture,
+				:$was-successful
+				;
 		}
 	}
 }
@@ -247,9 +247,13 @@ method end-turn {
 }
 
 method Str {
-	my $str = '';
+	my $str = $!whose-turn == White ?? 'W' !! 'B';
+	$str ~= '!' if $!is-game-ended;
+
+	# TODO serialize info about delegations
+
 	my $empties = 0;
-	for @!board.flat {
+	for @!board {
 		if .defined {
 			if $empties {
 				$str ~= $empties;
@@ -278,5 +282,5 @@ multi method gist(Board:D:) {
 		.join("\n");
 }
 multi method gist(Board:U:) {
-	'Nil'
+	'(uninitialized Board)'
 }
