@@ -46,8 +46,8 @@ submethod TWEAK {
 
 method clone(Board:D:) {
 	my Piece @board[8;8];
-	for ^8² {
-		@board[$_] = @!board[$_].clone;
+	for ^8 X ^8 -> ($rank, $file) {
+		@board[$rank;$file] = @!board[$rank;$file].clone;
 	}
 
 	return Board.new:
