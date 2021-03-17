@@ -45,7 +45,7 @@ def check_threats(piece):
     threats = []
     for x in range(8):
         for y in range(8):
-            if currentBoard[x][y].isupper() == currentBoard[piece[0]][piece[1]].isupper() and currentBoard[x][y] != " ":
+            if currentBoard[x][y].isupper() != currentBoard[piece[0]][piece[1]].isupper() and currentBoard[x][y] != " ":
                 if "x"+boardCord[piece[0]]+str(piece[1]+1) in board_server():
                     threats.append([x, y])
     return threats
