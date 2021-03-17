@@ -9,6 +9,7 @@ def board_server():
 
 #gives me the pieces and number of spaces
 def seperate_string_number(string):
+    string = string.replace(string[0],'',1)
     previous_character = string[0]
     groups = []
     newword = string[0]
