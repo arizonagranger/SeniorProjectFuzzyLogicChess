@@ -40,7 +40,8 @@ def boarState(state):
                 board.append(y)
     return(np.reshape(np.array(board), (8, 8)))
 
-#scans throught the board and checks for any threats on the pives piece
+#scans throught the board and checks for any threats on the given piece
+#this can also be used for the ai to find pieces that can attack a certain piece
 def check_threats(piece):
     threats = []
     for x in range(8):
@@ -49,11 +50,6 @@ def check_threats(piece):
                 if "x"+boardCord[piece[0]]+str(piece[1]+1) in board_server():
                     threats.append([x, y])
     return threats
-
-def check_attacks(piece):
-    attacks = []
-
-
 
 
 
