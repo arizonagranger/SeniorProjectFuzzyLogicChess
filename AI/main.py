@@ -26,6 +26,7 @@
 # newgame = requests.get(url = URL + "new-game")
 # gameState =  requests.get(url = URL + "game-state")
 # actions = requests.get(url = URL + "actions-for")
+# pieceAt = requests.get(url = URL + "piece-at")
 
 #moves for: GET /moves-for?coord="insertcoordinate"
 
@@ -74,8 +75,9 @@ bpiecesDict = {
     "i7": "b7",
     "i8": "a7"
 }
-pieces = ['K', 'Q', 'P', 'P', 'N', 'N', 'A', 'A', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I'] 
+ 
 def create_dict(team):
+    pieces = ['K', 'Q', 'P', 'P', 'N', 'N', 'A', 'A', 'I', 'I', 'I', 'I', 'I',              'I', 'I', 'I']
     aidict = {}
     if team == black:
         pieces = [x.lower() for x in pieces]
