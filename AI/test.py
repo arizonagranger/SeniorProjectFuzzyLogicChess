@@ -1,8 +1,7 @@
 # written by Haley Granger
 # Senior Project AI Chess
-
-
-##########################anytime you see multiple of these it means we need stuff from the rules engine#######################
+"""
+####anytime you see multiple of these it means we need stuff from the rules engine#######################
 # import AI Rules Engine
 # How do i do this? IDK
 ##%3E
@@ -28,7 +27,7 @@
 # actions = requests.get(url = URL + "actions-for")
 
 #moves for: GET /moves-for?coord="insertcoordinate"
-
+"""
 isDone = False
 isThreat = False
 white = 'W'
@@ -38,53 +37,83 @@ black = 'B'
 # _l indicates left side as seen from eyes of AI looking at board (a-c)
 # pawn numbering begins on left side and increases (P8 is on h2 starting)
 ###############this is a placeholder dict until we get rules engine, need to know format and how to import currentboard variable ##########
-wpiecesDict = {
-    "K": "e1",
-    "Q": "d1",
-    "P_r": "f1",
-    "P_l": "c1",
-    "N_r": "g1",
-    "N_l": "b1",
-    "A_r": "h1",
-    "A_l": "a1",
-    "I1": "a2",
-    "I2": "b2",
-    "I3": "c2",
-    "I4": "d2",
-    "I5": "e2",
-    "I6": "f2",
-    "I7": "g2",
-    "I8": "h2"
+defaultPieces = {
+    "e1": "K",
+    "d1": "Q",
+    "f1": "P_r",
+    "c1": "P_l",
+    "g1": "N_r",
+    "b1": "N_l",
+    "h1": "A_r",
+    "a1": "A_l",
+    "a2": "I1",
+    "b2": "I2",
+    "c2": "I3",
+    "d2": "I4",
+    "e2": "I5",
+    "f2": "I6",
+    "g2": "I7",
+    "h2": "I8",
+    "e8": "k",
+    "d8": "q",
+    "c8": "p_r",
+    "f8": "p_l",
+    "b8": "n_r",
+    "g8": "n_l",
+    "a8": "a_r",
+    "h8": "a_l",
+    "h7": "i1",
+    "g7": "i2",
+    "f7": "i3",
+    "e7": "i4",
+    "d7": "i5",
+    "c7": "i6",
+    "b7": "i7",
+    "a7": "i8"
 }
-bpiecesDict = {
-    "k": "e8",
-    "q": "d8",
-    "p_r": "c8",
-    "p_l": "f8",
-    "n_r": "b8",
-    "n_l": "g8",
-    "a_r": "a8",
-    "a_l": "h8",
-    "i1": "h7",
-    "i2": "g6",
-    "i3": "f5",
-    "i4": "e7",
-    "i5": "d7",
-    "i6": "c7",
-    "i7": "b7",
-    "i8": "a7"
-}
-pieces = ['K', 'Q', 'P', 'P', 'N', 'N', 'A', 'A', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I'] 
-def create_dict(team):
-    aidict = {}
+        
+def main():
+   create_coord()
+   # create_dict(white, defaultPieces, c)
+
+"""
+#creates dictionary of coordinates and pieces
+# takes team as req param, coord is optional to pass from def coordinates
+def create_dict(team, defaultPiece, coord = []):
+    pieces = ['K', 'Q', 'P', 'P', 'N', 'N', 'A', 'A', 'I', 'I', 'I', 'I', 'I',
+            'I', 'I', 'I'] 
+    aidict = defaultPiece
     if team == black:
         pieces = [x.lower() for x in pieces]
-    for i in pieces:
-      
-        
-
     
+    for i in coord:
+        if i == defaultPiece[i]:
+            continue
+        else:
+            aidict[i] = 'B'
+    print(aidict)
+""" 
+# updates coordinates
+def update_coord():
+    ################use get coordinate function from rules################
+    return "none" 
 
+# creates list of board coord from a1 ... h8
+def create_coord():
+    #ascii range for letters a - h
+    coord = []
+    strt, end = 97,104
+    for i in range(1, 9):
+        for j in range(strt,end+1):
+            coord.append(chr(j) + str(i))
+    print(coord)
+    return coord
+
+
+if __name__=="__main__":
+    main()
+    
+"""
 def new_game():
     aiPiecesPos = ai_team()
     #shows current players turn
@@ -143,4 +172,4 @@ def king_scanthreats():
 def evaluate_pieces(coord):
     ######### iterate through moves-for(coord) #####################
 
-
+"""
