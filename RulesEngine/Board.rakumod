@@ -205,6 +205,29 @@ method actions-for(Board:D: CoOrd $pos) {
 	return @actions;
 }
 
+method pieces($team-str, $corp-str) {
+	my $team = Team::«$team-str»;
+	die "Invalid team $team-str" without $team;
+	
+	my $corp;
+	with $corp-str {
+		$corp = Corp::«$corp-str»;
+		die "Invalid corp $corp-str" without $corp;
+	}
+	else {
+		$corp = any(K, L, R);
+	}
+
+	my CoOrd @coords;
+	for ^8 X ^8 -> ($rank, $file) {
+		with @!board[$rank;$file] {
+			push @coords: indices-to-coord $rank, $file if .team == $team && .corp == $corp;
+		}
+	}
+
+	return @coords;
+}
+
 method apply-action(Action $action) returns Action {
 	sub move($from, $to) {
 		my ($from_rank, $from_file) = coord-to-indices $from;
@@ -274,6 +297,16 @@ method apply-action(Action $action) returns Action {
 	}
 
 	return $realized-action;
+}
+
+method delegate(CoOrd $coord, $to-str) {
+	my ($rank, $file) = coord-to-indices $coord;
+	die "No piece at $coord to delegate" without @!board[$rank;$file];
+
+	my $to = Corp::«$to-str»;
+	die "Invalid corp $to-str" without $to;
+
+	@!board[$rank;$file].corp = $to;
 }
 
 method end-turn {

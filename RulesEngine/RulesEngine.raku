@@ -61,6 +61,18 @@ my $application = route {
 		content 'text/plain', $board.whose-turn.Str;
 	}
 
+	get -> 'pieces', :$team!, :$corp = Nil {
+		content 'text/plain', $board.pieces($team, $corp).join(',');
+
+		CATCH {
+			default {
+				conflict 'text/plain', .message;
+				say 'Exception caught in `pieces` endpoint:';
+				.say;
+			}
+		}
+	}
+
 
 	# -----  Actions  -----
 
@@ -72,6 +84,16 @@ my $application = route {
 		}
 		else {
 			bad-request;
+		}
+	}
+
+	post -> 'delegate', CoOrd :$coord!, :$corp! {
+		$board.delegate($coord, $corp);
+
+		CATCH {
+			default {
+				conflict 'text/plain', .message;
+			}
 		}
 	}
 
