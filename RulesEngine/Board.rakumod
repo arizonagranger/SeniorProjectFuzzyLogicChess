@@ -35,10 +35,27 @@ submethod TWEAK {
 			@!board[7;$file] = Piece.new: type => $_, team => Black;
 			$file++;
 		}
-
 		for ^8 -> $file {
 			@!board[1;$file] = Piece.new: type => Infantry, team => White;
 			@!board[6;$file] = Piece.new: type => Infantry, team => Black;
+		}
+
+		# Set initial delegations (pieces default to being in the King's command so we don't need to modify those)
+		for 1..2 -> $file {
+			@!board[0;$file].corp = L;
+			@!board[7;$file].corp = R;
+		}
+		for 5..6 -> $file {
+			@!board[0;$file].corp = R;
+			@!board[7;$file].corp = L;
+		}
+		for 0..2 -> $file {
+			@!board[1;$file].corp = L;
+			@!board[6;$file].corp = R;
+		}
+		for 5..7 -> $file {
+			@!board[1;$file].corp = R;
+			@!board[6;$file].corp = L;
 		}
 
 		$!whose-turn = White;

@@ -4,9 +4,11 @@ unit class Piece;
 
 enum PieceType is export < King Queen Archer Pikeman Knight Infantry >;
 enum Team is export < White Black >;
+enum Corp is export < K L R >; # King, left, right
 
 has PieceType $.type is required;
 has Team $.team is required;
+has Corp $.corp is rw = K;
 
 multi method clone(Piece:D:) {
 	Piece.new:
@@ -42,7 +44,8 @@ multi method shorthand(Piece:U:) {
 }
 
 multi method Str(Piece:D:) {
-	$!team == White ?? self.shorthand !! self.shorthand.lc;
+	  ($!team == White ?? self.shorthand !! self.shorthand.lc)
+	~ $!corp
 }
 multi method Str(Piece:U:) {
 	q{}
