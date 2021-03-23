@@ -29,10 +29,19 @@ my $application = route {
 
 	get -> 'actions-since', UInt :$action-idx! {
 		if $action-idx ≥ $board.actions.elems {
-			response.status = 409;
+			conflict 'text/plain', 'Index out of bounds';
 		}
 		else {
 			content 'text/plain', $board.actions[$action-idx..*].join(',');
+		}
+	}
+
+	get -> 'actions-since', Int :$action-idx! {
+		if $action-idx.abs > $board.actions.elems {
+			conflict 'text/plain', 'Index out of bounds';
+		}
+		else {
+			content 'text/plain', $board.actions[*+$action-idx..*].join(',');
 		}
 	}
 
