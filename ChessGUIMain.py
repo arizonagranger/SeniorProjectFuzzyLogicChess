@@ -1,7 +1,5 @@
 import pygame as p
 import sys
-import random
-import time
 
 #import Engine
 #import AI 
@@ -14,18 +12,28 @@ import time
 
 #Images loaded for the board
 
+
+#Backend initialization
+#Game state, moves, corps for pieces, etc.
+
+
 #Functions for gameplay
 def chessStart():
     attack_array = []
     valid_array = []
 
     #variables for logging clicks
+    spaceSel = () # number of spaces or squares selected
+    playerClicks = []  #tracks players clicks
 
     #load images 
+    running = True
 
     #condiditon for if game is running or if pieces have been captured
 
 
+    drawGameState(screen, valid_array, attack_array, spaceSel)
+    p.display.flip()
 
 #function to draw the board
 
@@ -42,3 +50,9 @@ def drawBoard(screen):
             color = colors[((r+c)%2)]
           #  p.draw.rect(screen, color, p.Rect(c* Square size))
 
+
+
+
+
+if __name__ == "__main__":
+    main()
