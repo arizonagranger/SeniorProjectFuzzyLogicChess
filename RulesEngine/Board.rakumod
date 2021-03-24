@@ -14,6 +14,7 @@ has Piece @.board[8;8];
 has Bool $.is-game-ended = False;
 has Piece::Team $.whose-turn;
 has Action @.actions;
+has UInt $.most-recent-roll;
 
 role Capturer {
 	method to-capture(Capturer:D: \key) { self.AT-KEY(key) }
@@ -76,7 +77,8 @@ method clone(Board:D:) {
 		:@board,
 		is-game-ended => $!is-game-ended,
 		whose-turn => $!whose-turn,
-		:@actions
+		:@actions,
+		most-recent-roll => $!most-recent-roll,
 		;
 	
 	# TODO copy data relating to delegation when we add that
@@ -249,7 +251,7 @@ method apply-action(Action $action) returns Action {
 		
 		my $was-successful = $action.was-successful;
 		unless defined $was-successful {
-			my $roll = (1..6).roll;
+			$!most-recent-roll = my $roll = (1..6).roll;
 			my PieceType ($attacker, $defender) =
 				self.piece-at($action.from).type,
 				self.piece-at($action.attacking).type;

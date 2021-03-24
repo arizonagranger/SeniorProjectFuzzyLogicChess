@@ -73,6 +73,10 @@ my $application = route {
 		}
 	}
 
+	get -> 'most-recent-roll' {
+		content 'text/plain', ($board.most-recent-roll or -1).Str;
+	}
+
 
 	# -----  Actions  -----
 
