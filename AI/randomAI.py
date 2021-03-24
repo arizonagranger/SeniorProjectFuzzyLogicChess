@@ -9,7 +9,7 @@ def random_move(team):
         del_moves = []
         del_pieces = requests.get(url = URL + "pieces?team=" + team + "&corp=" + delegates.pop(random.randrange(len(delegates)))).text.split(",")
         for piece in del_pieces:
-            del_moves.append(requests.get(url = URL + "actions-for?coord=" + piece).text.split("\n"))
+            del_moves += requests.get(url = URL + "actions-for?coord=" + piece).text.split("\n")
         random_move = del_moves[random.randrange(len(del_moves))]
         actions = requests.get(url = URL + "actions-for?coord=" + random_move) ##this would be where the ai would send to the move to rules and does everything with the board state
         moves.append(random_move)
