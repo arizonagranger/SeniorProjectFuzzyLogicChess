@@ -7,7 +7,7 @@ def random_move(team):
         for piece in del_pieces:
             del_moves.append(request.post(url = URL + "actions-for?coord=" + +boardCord[piece[0]]+str(piece[1]+1)).split("")) #replace the string in the split function with whatever the moves list is seperated by
         random_move = del_moves[random(del_moves)]
-        submitMove(random_move) ##this would be where the ai would send to the move to rules and does everything with the board state
+        submitMove(request.post("rules engine comand for submiting a move" + move) ##this would be where the ai would send to the move to rules and does everything with the board state
         moves.append(random_move)
     return moves
 
