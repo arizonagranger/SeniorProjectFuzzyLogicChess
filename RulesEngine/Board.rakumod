@@ -166,14 +166,17 @@ method actions-for(Board:D: CoOrd $pos) {
 		}
 
 		my @pos-indices = coord-to-indices $pos;
-		my @adjacents = @deltas.map({ @$_ Z+ @pos-indices }).grep({ 0 <= all($_) <= 7 });
 
 		when Pikeman | Infantry {
 			my $attacking-direction = $piece.team == White ?? 1 !! -1;
-			for @adjacents -> $possible {
+			my @forward-adjacents = ($attacking-direction X -1, 0, 1)
+				.map({ @$_ Z+ @pos-indices })
+				.grep({ 0 <= all($_) <= 7 });
+
+			for @forward-adjacents -> $possible {
 				my $possible-coord = indices-to-coord $possible;
 				with self.piece-at: $possible {
-					if .team != $piece.team && $possible[0] - @pos-indices[0] == $attacking-direction {
+					if .team != $piece.team {
 						@actions.push: Action.new: :from($pos), :attacking($possible-coord), :type(Capture);
 					}
 				}
@@ -184,6 +187,7 @@ method actions-for(Board:D: CoOrd $pos) {
 		}
 
 		when Archer {
+			my @adjacents = @deltas.map({ @$_ Z+ @pos-indices }).grep({ 0 <= all($_) <= 7 });
 			for @adjacents -> $possible {
 				without self.piece-at: $possible {
 					@actions.push: Action.new: :from($pos), :to(indices-to-coord $possible), :type(Move);
