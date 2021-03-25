@@ -15,18 +15,17 @@ def root_node(board):
 
 
 def node(board, depth):
+    #end turn here
     tracker = np.array([0, 0])
-    teams = {"W":"White", "B": "Black"}
+    teams = {"B":"White", "W": "Black"}
     if endgame or depth == 1000: #check if its an endgame state
         if win:
             return [1, 1]
-        elif loose:
-            return [-1, 1]
         else:
             return [0,1]
     else:
         for i in range(10):
-            #saves board state
+            # saves board state
             # sets board state as board
             random_move(teams[board[0]])
             #pops board
