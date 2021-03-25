@@ -1,3 +1,5 @@
+import re
+
 ##this takes the string that the rules engine gives and alters the GUI's 2d array to match the board state
 def board_state(board):
     types = {
