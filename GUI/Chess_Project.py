@@ -1,65 +1,96 @@
 from tkinter import *
+import requests
+import threading
 
-piece_color = \
-    [[2, 2, 2, 2, 2, 2, 2, 2],
-     [2, 2, 2, 2, 2, 2, 2, 2],
-     [0, 0, 0, 0, 0, 0, 0, 0],
-     [0, 0, 0, 0, 0, 0, 0, 0],
-     [0, 0, 0, 0, 0, 0, 0, 0],
-     [0, 0, 0, 0, 0, 0, 0, 0],
-     [1, 1, 1, 1, 1, 1, 1, 1],
-     [1, 1, 1, 1, 1, 1, 1, 1]]
-piece_type = \
-    [[2, 3, 4, 5, 6, 4, 3, 2],
-     [1, 1, 1, 1, 1, 1, 1, 1],
-     [0, 0, 0, 0, 0, 0, 0, 0],
-     [0, 0, 0, 0, 0, 0, 0, 0],
-     [0, 0, 0, 0, 0, 0, 0, 0],
-     [0, 0, 0, 0, 0, 0, 0, 0],
-     [1, 1, 1, 1, 1, 1, 1, 1],
-     [2, 3, 4, 5, 6, 4, 3, 2]]
-piece_del = \
-    [[3, 1, 1, 3, 3, 2, 2, 3],
-     [1, 1, 1, 3, 3, 2, 2, 2],
-     [0, 0, 0, 0, 0, 0, 0, 0],
-     [0, 0, 0, 0, 0, 0, 0, 0],
-     [0, 0, 0, 0, 0, 0, 0, 0],
-     [0, 0, 0, 0, 0, 0, 0, 0],
-     [2, 2, 2, 3, 3, 1, 1, 1],
-     [3, 2, 2, 3, 3, 1, 1, 3]]
+hostname = "192.168.84.128"
+port_number = "4850"
+
+url = "http://" + hostname + ":" + port_number
+
+whose_turn_req = url + "/whose-turn"
+is_done_req = url + "/is-done"
+end_turn_req = url + "/end-turn"
+save_state_req = url + "/save-state"
+restore_state_req = url + "/restore-state"
+new_game_req = url + "/new-game"
+game_state_req = url + "/game-state"
+actions_req = url + "/actions-for"
+piece_at_req = url + "/piece-at"
+
+root = None
+update = True
+server_response = True
+piece_selected = ""
+
+pieces = []
 
 
-def on_click():
-    print("Click")
+def on_click(self):
+     print("Hello")
+
+
+def parse_board_state():
+    global pieces
+
+    pieces = []
+    state = expand_spaces(requests.get(game_state_req).text[1:])
+
+    for i in range(8):
+        pieces.append([])
+        for j in range(8):
+            index = 2 * (i * 8 + j)
+            pieces[i].append(state[index:index+2])
+    return pieces
+
+
+def expand_spaces(state):
+    s = ""
+    num = ""
+    is_number = False
+
+    for ch in state:
+        try:
+            if int(ch):
+                is_number = True
+                num += ch
+        except ValueError:
+            if is_number:
+                for i in range(int(num)):
+                    s += "  "
+            is_number = False
+            s += ch
+    return s
 
 
 def get_piece_color(r, c):
-    if piece_color[r][c] == 1:
+    if pieces[r][c][0].islower():
         return "white"
-    elif piece_color[r][c] == 2:
+    else:
         return "black"
 
 
 def get_piece_delegation(r, c):
-    if piece_del[r][c] == 1:
+    if pieces[r][c][1] == "K":
         return "red"
-    elif piece_del[r][c] == 2:
+    elif pieces[r][c][1] == "L":
         return "blue"
-    elif piece_del[r][c] == 3:
+    elif pieces[r][c][1] == "R":
         return "green"
 
 
 def set_pieces(board):
     for i in range(8):
         for j in range(8):
-            if piece_type[j][i] != 0:
+            if pieces[j][i] != "  ":
                 border = Canvas(board, bd=-2, width=34, height=34, bg=get_piece_delegation(j, i))
                 piece = Canvas(board, bd=-2, width=30, height=30, bg=get_piece_color(j, i))
                 piece.grid(row=j, column=i)
                 border.grid(row=j, column=i)
 
 
-def main():
+def update_board_state():
+    global root
+
     root = Tk()
 
     title = Label(root, text="AI Chess Project (CS 4850)", font=("Calibri", 32, 'bold'))
@@ -100,6 +131,7 @@ def main():
     for i in range(8):
         for j in range(8):
             tile = Canvas(board, bd=-2, width=50, height=50)
+            # tile.bind("<Button-1>", on_click)
             if (i + j) % 2 == 0:
                 tile.configure(bg="white")
             else:
@@ -139,7 +171,50 @@ def main():
 
     main_content.pack()
 
-    root.mainloop()
+    return root
+
+
+def check_server():
+    global root, update, server_response
+
+    while update:
+        try:
+            requests.get(url, timeout=5)
+            server_response = True
+        except (requests.ConnectionError, requests.Timeout):
+            print("Unable to connect to " + url)
+            server_response = False
+            break
+
+
+def main_loop():
+    global root, update, pieces
+
+    parse_board_state()
+    print(pieces)
+    root = update_board_state()
+    while update:
+        root.update()
+
+
+def main():
+    global update, server_response
+
+    server_thread = threading.Thread(target=check_server)
+    server_thread.start()
+
+    if server_response:
+        requests.get(new_game_req)
+
+        main_thread = threading.Thread(target=main_loop)
+        main_thread.start()
+
+        while server_thread.is_alive() and main_thread.is_alive():
+            continue
+
+        update = False
+        main_thread.join()
+    server_thread.join()
 
 
 if __name__ == '__main__':
