@@ -36,3 +36,14 @@ def board_state(board):
                 piece_color[int(x / 8)][x % 8] = 0
                 x += 1
 
+
+ #take an input of cordinates of a pieces such as [2,6] and returns a list of coordinates that the piece can move to               
+def move_reader(piece):
+    boardCord = ["a", "b", "c", "d", "e", "f", "g", "h"]
+    moves = requests.get(url = URL + "actions-for?coord=" + boardCord.piece[0] + str(piece[1]+1)).text.split("\n")
+    move_cordinates = []
+    for move in moves:
+        if ">" in move:
+            move = re.split(pattern=r"[>x=]", string=move)
+            move_cordinates.append([boardCord.index(move[1][0]), int(move[1][1])])
+    return move_cordinates
