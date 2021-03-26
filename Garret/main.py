@@ -1,27 +1,30 @@
-# import random
-# import requests
-#
-# URL = "http://localhost:4850/"
-#
+from Board import Board
+from AI import AI
+import random
 
-def random_move(team):
-    boardCord = ["a", "b", "c", "d", "e", "f", "g", "h"]
-    delegates = ["L", "R", "K"]
-    moves = []
-    while len(delegates) > 0:
-        del_moves = []
-        del_pieces = requests.post(
-            url=URL + "pieces?team=" + team + "&corp=" + delegates.pop(random.randrange(len(delegates)))).text.split(
-            ",")
-        for piece in del_pieces:
-            del_moves.append(
-                requests.post(url=URL + "actions-for?coord=" + boardCord[piece[0]] + str(piece[1] + 1)).text.split(
-                    "\n"))
-        random_move = del_moves[random.randrange(len(del_moves))]
-        submitMove(requests.post(
-            url=URL + "actions-for?coord=" + random_move))  ##this would be where the ai would send to the move to rules and does everything with the board state
-        moves.append(random_move)
-    return moves
+test = "WAKNRPRQKKKPLNLAKIRIRIRIKIKILILIL32iLiLiLiKiKiRiRiRaKnLpLqKkKpRnRaK"
+b = Board(test)
+a = AI(b, 1)
 
+b.show_board()
 
-print(random_move("Black"))
+while True:
+    b.show_board()
+    x = int(input("0 for exit\n1 for move\n2 for attack\n3 for end turn: "))
+    if x == 0:
+        break
+    else:
+        if x == 1:
+            y = input("piece to: ")
+            b.move([int(y[0]), int(y[1])], [int(y[2]), int(y[3])])
+        elif x == 2:
+            y = input("piece to: ")
+            print(b.attack([int(y[0]), int(y[1])], [int(y[2]), int(y[3])]))
+        elif x == 3:
+            b.end_turn()
+            a.ai_move()
+        elif x == 4:
+            print(b.get_board())
+
+# test = [1,2,3,4,5]
+# print(random.sample(test, 5))
