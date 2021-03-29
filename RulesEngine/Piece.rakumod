@@ -14,6 +14,7 @@ multi method clone(Piece:D:) {
 	Piece.new:
 		type => $!type,
 		team => $!team,
+		corp => $!corp,
 		;
 }
 multi method clone(Piece:U:) {

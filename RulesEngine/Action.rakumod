@@ -65,7 +65,6 @@ method from-str(Action:U: Str $s) returns Action {
 
 	my Bool $was-successful;
 	if $type == (Capture | MoveCapture) && $<was-successful> !eq '?' {
-		say 'mark 2';
 		$was-successful = $<was-successful>.Str eq 's';
 	}
 

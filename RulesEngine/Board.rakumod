@@ -6,12 +6,13 @@ use Action;
 unit class Board;
 
 enum BoardType < Default >;
+enum GameState < InProgress WhiteWin BlackWin Draw >;
 
 has Bool $.is-clone = False;
 has BoardType $.type = Default;
 # rank-major (i.e. row-major), later rows closer to black side to align with how coordinates work
 has Piece @.board[8;8];
-has Bool $.is-game-ended = False;
+has GameState $.game-state = InProgress;
 has Piece::Team $.whose-turn;
 has Action @.actions;
 has UInt $.most-recent-roll;
@@ -75,13 +76,11 @@ method clone(Board:D:) {
 		:is-clone,
 		type => $!type,
 		:@board,
-		is-game-ended => $!is-game-ended,
+		game-state => $!game-state,
 		whose-turn => $!whose-turn,
 		:@actions,
 		most-recent-roll => $!most-recent-roll,
 		;
-	
-	# TODO copy data relating to delegation when we add that
 }
 
 multi sub indices-to-coord(UInt $rank, UInt $file) returns CoOrd {
@@ -243,6 +242,7 @@ method apply-action(Action $action) returns Action {
 	}
 
 	my $realized-action;
+	my $attacked;
 
 	given $action.type {
 		when Move {
@@ -262,6 +262,8 @@ method apply-action(Action $action) returns Action {
 
 			$was-successful = $roll ≥ %roll-needed-for{$attacker}.to-capture($defender);
 		}
+
+		$attacked = self.piece-at($action.attacking);
 
 		when Capture {
 			move $action.from, $action.attacking if $was-successful;
@@ -296,11 +298,12 @@ method apply-action(Action $action) returns Action {
 	push @!actions: $realized-action;
 
 	# Check if this ends the game
-	if $realized-action.type == Move | MoveCapture
+	if $realized-action.type == (Capture | MoveCapture)
 			&& $realized-action.was-successful 
-			&& self.piece-at($realized-action.attacking).type == King {
-		$!is-game-ended = True;
+			&& $attacked.type == King {
+		$!game-state = $!whose-turn == White ?? WhiteWin !! BlackWin;
 	}
+	# TODO draw state
 
 	return $realized-action;
 }
@@ -321,7 +324,12 @@ method end-turn {
 
 method Str {
 	my $str = $!whose-turn == White ?? 'W' !! 'B';
-	$str ~= '!' if $!is-game-ended;
+	$str ~= do given $!game-state {
+		when InProgress { 'P' }
+		when WhiteWin   { 'W' }
+		when BlackWin   { 'B' }
+		when Draw       { 'D' }
+	}
 
 	# TODO serialize info about delegations
 
