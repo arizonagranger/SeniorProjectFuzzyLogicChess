@@ -1,5 +1,4 @@
 from Board import Board
-from CorpAI import CorpAI
 import random
 
 
