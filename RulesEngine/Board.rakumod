@@ -297,13 +297,21 @@ method apply-action(Action $action) returns Action {
 
 	push @!actions: $realized-action;
 
-	# Check if this ends the game
+	# Handle game-ending moves and re-delegation on Pikeman death
 	if $realized-action.type == (Capture | MoveCapture)
-			&& $realized-action.was-successful 
-			&& $attacked.type == King {
-		$!game-state = $!whose-turn == White ?? WhiteWin !! BlackWin;
+			&& $realized-action.was-successful {
+		given $attacked.type {
+			when King {
+				$!game-state = $!whose-turn == White ?? WhiteWin !! BlackWin;
+			}
+
+			when Pikeman {
+				for @!board.grep: *.defined {
+					.corp = K if .corp == $attacked.corp && .team == $attacked.team;
+				}
+			}
+		}
 	}
-	# TODO draw state
 
 	return $realized-action;
 }
