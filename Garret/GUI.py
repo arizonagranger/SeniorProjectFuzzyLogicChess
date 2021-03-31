@@ -1,3 +1,5 @@
+## controls: left mouse move, right mouse attack, middle mouse delegate, any key ends turn
+
 import pygame as p
 from Board import Board
 from RandomAI import RandomAI
