@@ -156,19 +156,15 @@ class Board:
                     except:
                         pass
             if unit == "a":
-                for i in [2, 3]:
-                    for x in [0, -i, i]:
-                        for y in [-i, i]:
-                            try:
-                                if self.board[coord[0] + x][coord[1] + y].team == abs(team - 1):
-                                    attacks.append([coord[0] + x, coord[1] + y])
-                            except:
-                                pass
-                            try:
-                                if self.board[coord[0] + y][coord[1] + x].team == abs(team - 1):
-                                    attacks.append([coord[0] + y, coord[1] + x])
-                            except:
-                                pass
+                for x in range(4):
+                    for y in range(4):
+                        for j in [1,-1]:
+                            for i in [1,-1]:
+                                try:
+                                    if self.board[coord[0] + (j * x)][coord[1] + (i * y)].team == abs(team - 1):
+                                        attacks.append([coord[0] + (j * x), coord[1] + (i * y)])
+                                except:
+                                    pass
             res = []
             [res.append(x) for x in attacks if x not in res]
             if unit == "i" or unit == "p":
@@ -205,8 +201,30 @@ class Board:
                 if self.board[x][y] is not None:
                     self.board[x][y].coord = [x, y]
 
-    def can_attack(self, attacker, coord):
-      print("can attack")
+    def in_range(self, unit, attacker, coord):
+        for x in [0, -1, 1]:
+            for y in [-1, 1]:
+                try:
+                    if [attacker[0] + x, attacker[1] + y] == coord:
+                        return True
+                except:
+                    pass
+                try:
+                    if [attacker[0] + y, attacker[1] + x] == coord:
+                        return True
+                except:
+                    pass
+        if unit == "a":
+            for x in range(4):
+                for y in range(4):
+                    for j in [1, -1]:
+                        for i in [1, -1]:
+                            try:
+                                if self.board[coord[0] + (j * x)][coord[1] + (i * y)].team == coord:
+                                    return True
+                            except:
+                                pass
+        return False
 
     def attack(self, attacker, defender):
         self.update_pieces()
@@ -224,10 +242,18 @@ class Board:
                 if self.board[defender[0]][defender[1]].unit == "p":
                     self.corp_dead(self.board[defender[0]][defender[1]].team,
                                    self.board[defender[0]][defender[1]].delegation)
+                    if self.board[attacker[0]][attacker[1]].unit == "a":
+                        self.board[defender[0]][defender[1]] = None
+                    else:
+                        self.board[defender[0]][defender[1]] = self.board[attacker[0]][attacker[1]]
+                        self.board[attacker[0]][attacker[1]] = None
                 elif self.board[defender[0]][defender[1]].unit == "k":
                     self.king_dead(self.board[defender[0]][defender[1]].team)
-                    self.board[defender[0]][defender[1]] = self.board[attacker[0]][attacker[1]]
-                    self.board[attacker[0]][attacker[1]] = None
+                    if self.board[attacker[0]][attacker[1]].unit == "a":
+                        self.board[defender[0]][defender[1]] = None
+                    else:
+                        self.board[defender[0]][defender[1]] = self.board[attacker[0]][attacker[1]]
+                        self.board[attacker[0]][attacker[1]] = None
                     return [2, roll]
                 elif self.board[attacker[0]][attacker[1]].unit == "a":
                     self.board[defender[0]][defender[1]] = None
@@ -265,6 +291,16 @@ class Board:
 
     def add_piece(self, team, unit, delegation, coord):
         self.board[coord[0]][coord[1]] = Piece(team, unit, delegation, coord)
+        self.update_pieces()
+
+    def delete_piece(self, coord):
+        self.board[coord[0]][coord[1]] = None
+        self.update_pieces()
+
+    def set_piece(self, piece, coord):
+        self.board[coord[0]][coord[1]] = self.board[piece[0]][piece[1]]
+        self.board[piece[0]][piece[1]] = None
+        self.update_pieces()
 
     def show_board(self):
         for x in range(len(self.board)):
@@ -292,6 +328,27 @@ class Board:
                             print(self.board[x][y].unit, end=" ")
                     elif [x, y] in self.get_moves(coord):
                         print(u"\u25A0", end=" ")
+                    else:
+                        print(0, end=" ")
+                print()
+
+    def show_attacks(self, coord):
+        attacks = self.get_attacks(coord)
+        print(attacks)
+        if self.board[coord[0]][coord[1]] is not None:
+            for x in range(8):
+                for y in range(8):
+                    if self.board[x][y] is not None:
+                        if [x, y] == coord:
+                            print("\033[38;2;{};{};{}m{} \033[38;2;255;255;255m".format(150,150,15, self.board[x][y].unit), end="")
+                        elif self.board[x][y].team == 1:
+                            if [x, y] in attacks:
+                                print("\033[38;2;{};{};{}m{} \033[38;2;255;255;255m".format(150, 80, 15,
+                                                                                            self.board[x][y].unit),end="")
+                            else:
+                                print(self.board[x][y].unit.upper(), end=" ")
+                        else:
+                            print(self.board[x][y].unit, end=" ")
                     else:
                         print(0, end=" ")
                 print()
