@@ -1,4 +1,5 @@
 import requests
+import re
 
 HOSTNAME = "192.168.84.128"
 PORT = "4850"
@@ -16,6 +17,38 @@ actions_req = url + "/actions-for"
 piece_at_req = url + "/piece-at"
 
 server_response = True
+
+
+class Button:
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.w = 100
+        self.h = 100
+        self.text = ""
+        self.color = (0, 0, 0)
+        self.selectColor = (0, 0, 0)
+        self.action = action
+
+    def __init__(self, x, y, w, h, text, color, selectColor, action):
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+        self.text = text
+        self.color = color
+        self.selectColor = selectColor
+        self.action = action
+
+
+def coords_to_notation(coords):
+    letters = ["a", "b", "c", "d", "e", "f", "g", "h"]
+    return letters[coords[0]] + str(coords[1] + 1)
+
+
+def notation_to_coords(notation):
+    return [int(ord(notation[0]) - 97), int(notation[1]) - 1]
+
 
 #function that gets the board state from the RulesEngine and returns a 2D array
 def parse_board_state():
@@ -37,11 +70,10 @@ def expand_spaces(state):
     is_number = False
 
     for ch in state:
-        try:
-            if int(ch):
-                is_number = True
-                num += ch
-        except ValueError:
+        if ch.isnumeric():
+            is_number = True
+            num += ch
+        else:
             if is_number:
                 for i in range(int(num)):
                     s += "  "
@@ -49,7 +81,24 @@ def expand_spaces(state):
             s += ch
     return s
 
+#gets the team/color of the piece at [c, r]
+def get_piece_color(pieces, r, c):
+    if pieces[r][c][0].islower():
+        return "white"
+    else:
+        return "black"
 
+
+#gets the delegation of the piece at [c, r]
+def get_piece_delegation(pieces, r, c):
+    if pieces[r][c][1] == "K":
+        return "red"
+    elif pieces[r][c][1] == "L":
+        return "blue"
+    elif pieces[r][c][1] == "R":
+        return "green"
+
+#returns the file name of a piece
 def get_image(name):
     s = ""
     if name[0].islower():
@@ -59,6 +108,21 @@ def get_image(name):
 
     s += name[0].upper()
     return s
+
+
+def get_piece(coords):
+    return requests.get(piece_at_req + "?coord=" + coords_to_notation(coords)).text.split("\n")
+
+
+#take an input of cordinates of a pieces such as [2,6] and returns a list of coordinates that the piece can move to
+def move_reader(piece):
+    moves = requests.get(actions_req + "?coord=" + coords_to_notation(piece)).text.split("\n")
+    move_coordinates = []
+    for move in moves:
+        if ">" in move:
+            move = re.split(pattern=r"[>x=]", string=move)
+            move_coordinates.append(notation_to_coords(move[1]))
+    return move_coordinates
 
 
 #checks the status of the RulesEngine server
