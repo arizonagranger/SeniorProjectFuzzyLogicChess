@@ -247,6 +247,8 @@ def draw_moves():
 
 def draw_pieces():
     del_color = {"K": (0, 0, 255), "L": (0, 255, 0), "R": (255, 0, 0)}
+    white_count = 0
+    black_count = 0
 
     for x in range(DIMENSION):
         for y in range(DIMENSION):
@@ -258,6 +260,17 @@ def draw_pieces():
                 img_name = str(piece.team) + piece.unit
                 SCREEN.blit(IMAGES[img_name], p.Rect(x * SQ_SIZE + OFFSET[0], y * SQ_SIZE + OFFSET[1], SQ_SIZE, SQ_SIZE))
                 p.draw.rect(SCREEN, p.Color(del_color[piece.delegation]), p.Rect(x * SQ_SIZE + OFFSET[0] + 2, (y + 1) * SQ_SIZE + OFFSET[1] - 4, 60, 4))
+
+    # Draw captured pieces
+    for piece in BOARD.captured:
+        img_name = str(piece.team) + piece.unit
+        img = p.transform.scale(IMAGES[img_name], (32, 32))
+        if piece.team == 0:
+            SCREEN.blit(img, p.Rect(white_count % 4 * 32 + 64, white_count // 4 * 32 + 280, SQ_SIZE, SQ_SIZE))
+            white_count += 1
+        else:
+            SCREEN.blit(img, p.Rect((black_count % 4 + 4) * 32 + 64, black_count // 4 * 32 + 280, SQ_SIZE, SQ_SIZE))
+            black_count += 1
 
 
 def draw_buttons():

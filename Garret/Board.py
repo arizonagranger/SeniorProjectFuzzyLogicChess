@@ -6,6 +6,7 @@ class Board:
 
     def __init__(self, boardString):
         self.board = []
+        self.captured = []
         self.state = 2
         self.attack_values = {
             "kk": 4, "kq": 4, "kn": 4, "kp": 4, "ka": 5, "ki": 1,
@@ -249,6 +250,7 @@ class Board:
                 roll -= 1
             if roll >= self.attack_values[
                 str(self.board[attacker[0]][attacker[1]].unit) + str(self.board[defender[0]][defender[1]].unit)]:
+                self.captured.append(self.board[defender[0]][defender[1]])
                 for x in self.get_del(self.board[attacker[0]][attacker[1]].team,
                                       self.board[attacker[0]][attacker[1]].delegation):
                     self.board[x[0]][x[1]].move = False
