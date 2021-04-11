@@ -138,6 +138,7 @@ class Board:
         elif speed == 0:
             return [coord]
         else:
+            moves += [coord]
             for x in [0, -1, 1]:
                 for y in [-1, 1]:
                     moves += (self.get_moves_speed([coord[0] + x, coord[1] + y], speed - 1))
