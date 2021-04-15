@@ -381,3 +381,8 @@ class Board:
                     else:
                         print(0, end=" ")
                 print()
+     
+     def prob(self, attacker, defender):
+        value = self.attack_values.get([str(attacker.unit)+str(defender.unit)])
+        prob = value/6
+        return prob
