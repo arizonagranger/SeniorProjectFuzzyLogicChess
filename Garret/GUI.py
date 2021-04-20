@@ -138,7 +138,7 @@ def update_game():
                 else:
                     print(BOARD.get_piece(x[2]).delegation, " : moved ", x[0], " to ", x[1], " and attacked ", x[2], x[3][1])
             elif len(x) == 3:
-                if x[3][0] == 0:
+                if x[2][0] == 0:
                     print(BOARD.get_piece(x[0]).delegation," : ", x[0], " attacked ", x[1], x[2][1])
                 elif BOARD.get_piece(x[0]) is None:
                     print(BOARD.get_piece(x[1]).delegation, " : ", x[0], " attacked ", x[1], x[2][1])
