@@ -318,6 +318,8 @@ class Board:
     def del_piece(self, piece, corps):
         if self.board[piece[0]][piece[1]].delegation == "K" and self.board[piece[0]][piece[1]].unit != "k":
             self.board[piece[0]][piece[1]].delegation = corps
+            self.board[piece[0]][piece[1]].move = False
+            self.board[piece[0]][piece[1]].attack = False
 
     #activates if king is dead
     def king_dead(self, team):
