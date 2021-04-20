@@ -1,6 +1,7 @@
 import pygame as p
 import Board as Board
 import RandomAI as RandAI
+import AI as ai
 import random
 
 # The resolution of the main window (16:9)
@@ -16,13 +17,16 @@ SQ_SIZE = HEIGHT // DIMENSION
 OFFSET = [(SCREEN_SIZE[0] - WIDTH) / 2, (SCREEN_SIZE[1] - HEIGHT) / 2]
 
 # Starting state of the board
+#WAKNRPRQKKKPLNLAKIRIRIRIKIKILILIL32iLiLiLiKiKiRiRiRaKnLpLqKkKpRnRaK
 INITIAL_STATE = "WAKNRPRQKKKPLNLAKIRIRIRIKIKILILIL32iLiLiLiKiKiRiRiRaKnLpLqKkKpRnRaK"
 # Board object reference
 BOARD = Board.Board(INITIAL_STATE)
 # Create the main window display using the screen size
 SCREEN = p.display.set_mode((SCREEN_SIZE[0], SCREEN_SIZE[1]))
 # AI object reference
-AI = RandAI.RandomAI(BOARD, 1)
+RAI = RandAI.RandomAI(BOARD, 1)
+AI2 = ai.AI(BOARD, 1)
+AI = ai.AI(BOARD, 0)
 # The currently selected chess piece; none if no piece is selected
 PIECE = None
 # The value of the last dice roll; 0 on start
@@ -84,12 +88,19 @@ def start_game():
 
 # Actions that occur whenever a new game is started
 def new_game():
-    global BOARD, AI, DICE_ROLL, GAME_RUNNING
+    global BOARD, AI, RAI, AI2, DICE_ROLL, GAME_RUNNING
 
     # Reset the board state
     BOARD = Board.Board(INITIAL_STATE)
+    # BOARD.add_piece(0, "k", "K", [7, 0])
+    # BOARD.add_piece(0, "k", "K", [6, 0])
+    # BOARD.add_piece(1, "a", "R", [0, 0])
+    # BOARD.add_piece(1, "a", "L", [0, 3])
+    # BOARD.add_piece(1, "k", "K", [0, 7])
     # Reset the AI
-    AI = RandAI.RandomAI(BOARD, 1)
+    AI = ai.AI(BOARD, 0)
+    AI2 = ai.AI(BOARD, 1)
+    RAI = RandAI.RandomAI(BOARD, 1)
     # Sets the dice to a random number
     DICE_ROLL = random.randint(1, 6)
     # Clear captured pieces list
@@ -117,11 +128,16 @@ def update_game():
 
     # Do AI actions if not the player's turn
     if BOARD.turn == 1:
-        AI.ai_move()
+        # AI.test_future_move()
+        # BOARD.end_turn()
+        # RAI.ai_move()
+        AI2.test_future_move()
+        BOARD.end_turn()
 
 
 # Actions that occur when the player ends their turn
 def end_turn():
+    # AI.test_future_move()
     # Reset piece and moves list
     reset_state()
     # Tell Board object's that the player's turn has ended
@@ -430,6 +446,12 @@ def mouse_event(event):
                 elif event.button == 2:
                     # Change piece's delegation
                     delegate_piece(coords)
+                elif event.button == 6:
+                    AI.test_future_move()
+                    # AI.previous = []
+                    # print(AI.future_move(PIECE_COORDS, BOARD, PIECE_COORDS, 0))
+                    # print((AI.corps[BOARD.get_piece(PIECE_COORDS).delegation].get_future_moves()))
+                    # AI.testing_stuff()
                 # Reset piece
                 PIECE_COORDS = []
                 PIECE = None
@@ -448,10 +470,10 @@ def mouse_event(event):
             # Get location on board in chess notation
             TOOLTIP.append(get_notation(coords))
             # If selected piece can move to square's position
-            if coords in BOARD.get_moves(PIECE_COORDS):
+            if coords in MOVE_LIST:
                 TOOLTIP.append("Left-click to move")
             # If selected piece can attack square's position
-            elif coords in BOARD.get_attacks(PIECE_COORDS):
+            elif coords in ATTACK_LIST:
                 TOOLTIP.append("Right-click to attack")
                 TOOLTIP.append("Chance of success: " + str(get_success_rate(PIECE_COORDS, coords)) + " / 6")
             # If square's position is the selected piece's position
@@ -527,7 +549,8 @@ def delegate_piece(coords):
 # Returns the coordinate on the chess board in chess notation (e.g. [0, 0] -> "A1")
 def get_notation(coords):
     letters = {0: "A", 1: "B", 2: "C", 3: "D", 4: "E", 5: "F", 6: "G", 7: "H"}
-    return letters[coords[1]] + str(8 - coords[0])
+    #return letters[coords[1]] + str(8 - coords[0])
+    return str(coords[0])+"," + str(coords[1])
 
 
 # Returns piece info in a format useful to the tooltip
@@ -537,6 +560,8 @@ def piece_to_string(piece):
 
 # Returns the success rate of an attack on defender by attacker as an integer
 def get_success_rate(attacker, defender):
+    if BOARD.get_piece(attacker).unit == "n" and not BOARD.get_piece(attacker).move:
+        return 6 - BOARD.attack_values[BOARD.get_piece(attacker).unit + BOARD.get_piece(defender).unit]
     return 7 - BOARD.attack_values[BOARD.get_piece(attacker).unit + BOARD.get_piece(defender).unit]
 
 
