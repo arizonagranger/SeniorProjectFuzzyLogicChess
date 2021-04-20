@@ -144,6 +144,7 @@ def update_game():
         # AI.test_future_move()
         # BOARD.end_turn()
         # RAI.ai_move()
+
         PROCESSING = True
         AI_THREAD = threading.Thread(target=ai_thread, args=[1])
         AI_THREAD.start()
@@ -188,13 +189,36 @@ def quit_game():
 
 
 def ai_thread(turn):
-    global AI_THREAD, PROCESSING
+    global AI_THREAD, PROCESSING, MOVES, PIECE
 
+    MOVES = [["King: "], ["Left Bishop: "], ["Right Bishop: "], [""]]
     if turn == 0:
         AI.test_future_move()
         reset_state()
     else:
-        AI2.test_future_move()
+        for x in AI2.test_future_move():
+            if len(x) == 4:
+                if x[3][0] == 0:
+                    PIECE = BOARD.get_piece(x[1])
+                    update_moves(0, x[0], x[1], x[3][1])
+                    update_moves(2, x[1], x[2], x[3][1])
+                else:
+                    PIECE = BOARD.get_piece(x[2])
+                    update_moves(0, x[0], x[1], x[3][1])
+                    update_moves(1, x[1], x[2], x[3][1])
+            elif len(x) == 3:
+                if x[2][0] == 0:
+                    PIECE = BOARD.get_piece(x[0])
+                    update_moves(2, x[0], x[1], x[2][1])
+                elif BOARD.get_piece(x[0]) is None:
+                    PIECE = BOARD.get_piece(x[1])
+                    update_moves(1, x[0], x[1], x[2][1])
+                else:
+                    PIECE = BOARD.get_piece(x[0])
+                    update_moves(1, x[0], x[1], x[2][1])
+            else:
+                PIECE = BOARD.get_piece(x[1])
+                update_moves(0, x[0], x[1])
     BOARD.end_turn()
     AI_THREAD = False
     PROCESSING = False
@@ -424,9 +448,14 @@ def draw_tooltip():
             spacing += text_obj.get_size()[1] + 5
 
 
-def update_moves(action=-1, start_pos=[], end_pos=[]):
+def update_moves(action=-1, start_pos=[], end_pos=[], roll=DICE_ROLL):
+    global MOVES
+
     del_index = {"K": 0, "L": 1, "R": 2}
     del_name = {"K": "King", "L": "Left Bishop", "R": "Right Bishop"}
+
+    if len(MOVES) != 3 and PIECE.team == 0:
+        MOVES = [["King: "], ["Left Bishop: "], ["Right Bishop: "]]
 
     # Check if piece exists
     if PIECE is not None:
@@ -438,30 +467,30 @@ def update_moves(action=-1, start_pos=[], end_pos=[]):
         if action == 0:
             if move_list[0] != del_name[delegation] + ": ":
                 move_list[len(move_list) - 1] += " and"
-                move_list.append("moved " + str(start_pos) + " to " + str(end_pos))
+                move_list.append("moved " + get_notation(start_pos) + " to " + get_notation(end_pos))
             else:
-                move_list[0] = del_name[delegation] + ": Moved " + str(start_pos) + " to " + str(end_pos)
+                move_list[0] = del_name[delegation] + ": Moved " + get_notation(start_pos) + " to " + get_notation(end_pos)
         # Successful attack action
         elif action == 1:
             # Check if this piece is a knight attacking after moving
             if PIECE.unit == "n" and move_list[0] != del_name[delegation] + ": ":
-                move_list.append("and successfully attacked " + str(end_pos) + " (" + str(DICE_ROLL) + ")")
+                move_list.append("and successfully attacked " + get_notation(end_pos) + " (" + str(roll) + ")")
             else:
-                move_list[0] = del_name[delegation] + ": " + str(start_pos) + " successfully attacked " + str(end_pos) + " (" + str(DICE_ROLL) + ")"
+                move_list[0] = del_name[delegation] + ": " + get_notation(start_pos) + " successfully attacked " + get_notation(end_pos) + " (" + str(roll) + ")"
         # Unsuccessful attack action
         elif action == 2:
             # Check if this piece is a knight attacking after moving
             if PIECE.unit == "n" and move_list[0] != del_name[delegation] + ": ":
-                move_list.append("and failed to attack " + str(end_pos) + " (" + str(DICE_ROLL) + ")")
+                move_list.append("and failed to attack " + get_notation(end_pos) + " (" + str(roll) + ")")
             else:
-                move_list[0] = del_name[delegation] + ": " + str(start_pos) + " failed to attack " + str(end_pos) + " (" + str(DICE_ROLL) + ")"
+                move_list[0] = del_name[delegation] + ": " + get_notation(start_pos) + " failed to attack " + get_notation(end_pos) + " (" + str(roll) + ")"
         # Delegate action
         elif action == 3:
             if move_list[0] != del_name[delegation] + ": ":
                 move_list[len(move_list) - 1] += " and"
-                move_list.append("delegated " + str(start_pos) + " to " + del_name[BOARD.get_piece(end_pos).delegation])
+                move_list.append("delegated " + get_notation(start_pos) + " to " + del_name[BOARD.get_piece(end_pos).delegation])
             else:
-                move_list[0] = del_name[delegation] + ": Delegated " + str(start_pos) + " to " + del_name[BOARD.get_piece(end_pos).delegation]
+                move_list[0] = del_name[delegation] + ": Delegated " + get_notation(start_pos) + " to " + del_name[BOARD.get_piece(end_pos).delegation]
 
 
 def mouse_event(event):
