@@ -89,7 +89,6 @@ class AI:
     def check_strength(self, corp):
         corp.update_corp()
         weak = True
-        print(corp.pieces)
         for piece in corp.pieces:
             if self.board.get_piece(piece).unit not in ["p", "i"]:
                 weak = False
@@ -218,9 +217,10 @@ class AI:
 
     def test_move_infa(self):
         rand_corps = ["L", "R"]
-        random.shuffle(rand_corps)
+        moves_taken = []
         for i in rand_corps:
-            self.corps[i].move_infa()
+            moves_taken.append(self.corps[i].move_infa())
+        return moves_taken
 
     def move_infa(self):
         self.update_corp()
@@ -235,18 +235,28 @@ class AI:
             random.shuffle(moves)
             move = moves[0]
             self.board.move(piece, move)
+            return [piece, move]
 
     # **********************NOTE****************************
     # scan threats set value then run future moves
     # use future moves in scan
 
+    def check_attack(self, piece):
+        self.board.update_pieces()
+        attacks = self.board.get_attacks(piece)
+        if len(attacks) > 0:
+            sorted(attacks, key=lambda attack: self.move_value(self.board, piece, attack))
+            return attacks[0]
+        return None
+
     def test_future_move(self):
         self.update_corp()
         self.change_aggression()
         self.counter += 1
+        moves_taken = []
         corps = list(self.corps.keys())
         if self.counter == 1:
-            self.test_move_infa()
+            moves_taken += self.test_move_infa()
             corps.remove("R")
             corps.remove("L")
         print(self.counter)
@@ -258,18 +268,17 @@ class AI:
                     best = move
             corps.remove(self.board.get_piece(best[0]).delegation)
             if move[1][1][0] == 1:
-                print("attack ", self.board.get_piece(best[0]).delegation, " : ", best[0], best[1][1][1], ":",
-                      self.board.attack(best[0], best[1][1][1]))
+                moves_taken.append([best[0], best[1][1][1], self.board.attack(best[0], best[1][1][1])])
             else:
-                print("move ", self.board.get_piece(best[0]).delegation, " : ", best[0], ":", best[1][1][1])
                 self.board.move(best[0], best[1][1][1])
+                extra = self.check_attack(best[1][1][1])
+                if extra is not None:
+                    moves_taken.append([best[0], best[1][1][1], extra, self.board.attack(best[1][1][1], extra)])
+                else:
+                    moves_taken.append([best[0], best[1][1][1]])
+        return moves_taken
         self.board.update_pieces()
-        for piece in self.board.get_team(self.team):
-            print(piece,":", self.board.get_piece(piece).move," and ", self.board.get_piece(piece).attack)
-        for piece in self.board.get_team(self.team):
-            if len(self.board.get_attacks(piece)) != 0:
-                print("attack from: ", piece)
-                self.board.attack(piece, self.board.get_attacks(piece)[0])
+
 
 
     def get_future_moves(self):
@@ -310,7 +319,7 @@ class AI:
             moves = temp.get_moves(piece)
             for move in moves:
                 attacks_values.append([self.future_move(piece, temp, move, turns + 1, moves) + self.test_move(temp, piece, move), [0, move]])
-        elif turns < 1 and (temp.get_piece(piece).unit == "n"):
+        elif turns < 2 and (temp.get_piece(piece).unit == "n"):
             moves = temp.get_moves(piece)
             for move in moves:
                 attacks_values.append([self.future_move(piece, temp, move, turns + 1, moves) + self.test_move(temp, piece, move), [0, move]])
