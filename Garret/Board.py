@@ -5,6 +5,7 @@ import random
 class Board:
 
     def __init__(self, boardString):
+        self.counter = 0
         self.board = []
         self.captured = []
         self.state = 2
@@ -57,6 +58,18 @@ class Board:
                     x += 1
         self.set_turn(self.turn)
 
+    def copy_board(self, board):
+        for x in range(len(board.board)):
+            for y in range(len(board.board)):
+                if board.board[x][y] is not None:
+                    self.board[x][y] = Piece(board.board[x][y].team, board.board[x][y].unit, board.board[x][y].delegation, board.board[x][y].coord)
+                    self.board[x][y].move = board.board[x][y].move
+                    self.board[x][y].attack = board.board[x][y].attack
+                    self.board[x][y].threatValue = board.board[x][y].threatValue
+                    self.board[x][y].threatLevel = board.board[x][y].threatLevel
+                else:
+                    self.board[x][y] = None
+
     #sets all the pieces on the team that cant move
     def set_turn(self, team):
         for x in self.board:
@@ -85,7 +98,7 @@ class Board:
                 else:
                     number += 1
         return boardString
-    
+
     #returns all coordinates of a delegation in a list
     def get_del(self, team, delegation):
         self.update_pieces()
@@ -95,18 +108,27 @@ class Board:
                 if y is not None and y.delegation == delegation and y.team == team:
                     del_list.append(y.coord)
         return del_list
-    
+
     #returns a list of the coordinates of all pieces
     def get_team(self, team):
-        del_list = []
+        team_list = []
         for x in self.board:
             for y in x:
                 if y is not None and y.team == team:
-                    del_list.append(y.coord)
-        return del_list
-    
+                    team_list.append(y.coord)
+        return team_list
+
+    def get_team_pieces(self, team):
+        team_list = []
+        for x in self.board:
+            for y in x:
+                if y is not None and y.team == team:
+                    team_list.append(y)
+        return team_list
+
     #returns a list of all possible locations to move for the piece
     def get_moves(self, coord):
+        self.counter = 0
         self.update_pieces()
         if self.board[coord[0]][coord[1]].move:
             team = self.board[coord[0]][coord[1]].team
@@ -115,8 +137,8 @@ class Board:
             moves = [0]
             for x in [0, -1, 1]:
                 for y in [-1, 1]:
-                    moves += (self.get_moves_speed([coord[0] + x, coord[1] + y], speed - 1))
-                    moves += (self.get_moves_speed([coord[0] + y, coord[1] + x], speed - 1))
+                    moves += (self.get_moves_speed([coord[0] + x, coord[1] + y], speed - 1, [coord]))
+                    moves += (self.get_moves_speed([coord[0] + y, coord[1] + x], speed - 1, [coord]))
             res = []
             [res.append(x) for x in moves if x not in res]
             res.pop(0)
@@ -129,20 +151,24 @@ class Board:
             return res
         else:
             return []
-    
+
     #called by get move and is recursivley called to find the reach of a piece
-    def get_moves_speed(self, coord, speed):
+    def get_moves_speed(self, coord, speed, prev):
+        self.counter += 1
         moves = []
+        past = prev.copy()
+        past.append(coord)
         if coord[0] >= 8 or coord[0] < 0 or coord[1] >= 8 or coord[1] < 0 or self.board[coord[0]][coord[1]] != None:
-            return [0]
+            return [0, 0]
         elif speed == 0:
             return [coord]
-        else:
-            moves += [coord]
-            for x in [0, -1, 1]:
-                for y in [-1, 1]:
-                    moves += (self.get_moves_speed([coord[0] + x, coord[1] + y], speed - 1))
-                    moves += (self.get_moves_speed([coord[0] + y, coord[1] + x], speed - 1))
+        moves += [coord]
+        for x in [0, -1, 1]:
+            for y in [-1, 1]:
+                if [coord[0] + x, coord[1] + y] not in past:
+                    moves += (self.get_moves_speed([coord[0] + x, coord[1] + y], speed - 1, past))
+                if [coord[0] + y, coord[1] + x] not in past:
+                    moves += (self.get_moves_speed([coord[0] + y, coord[1] + x], speed - 1, past))
         return moves
 
     #returns a list of the possible places to attck for a piece
@@ -181,7 +207,8 @@ class Board:
                     moves = [x for x in res if x[0] > coord[0]]
                 else:
                     moves = [x for x in res if x[0] < coord[0]]
-            moves = res
+            else:
+                moves = res
             testx = [x for x in moves if x[0] <= 7 and x[0] >= 0]
             testy = [x for x in testx if x[1] <= 7 and x[1] >= 0]
             return testy
@@ -204,7 +231,7 @@ class Board:
             return True
         else:
             return False
-    
+
     #sets all the pieces coordinates to where they are on the field
     def update_pieces(self):
         for x in range(len(self.board)):
@@ -243,14 +270,13 @@ class Board:
     def attack(self, attacker, defender):
         self.update_pieces()
         if self.board[attacker[0]][attacker[1]] is not None and defender in self.get_attacks(attacker):
-            self.update_pieces()
             roll = random.randrange(1, 7)
-            self.board[attacker[0]][attacker[1]].move = False
-            self.board[attacker[0]][attacker[1]].attack = False
             if self.board[attacker[0]][attacker[1]].unit == "n" and not self.board[attacker[0]][attacker[1]].move:
                 roll -= 1
-            if roll >= self.attack_values[
-                str(self.board[attacker[0]][attacker[1]].unit) + str(self.board[defender[0]][defender[1]].unit)]:
+            for pieces in self.get_del(self.get_piece(attacker).team, self.get_piece(attacker).delegation):
+                self.get_piece(pieces).move = False
+                self.get_piece(pieces).attack = False
+            if roll >= self.attack_values[str(self.board[attacker[0]][attacker[1]].unit) + str(self.board[defender[0]][defender[1]].unit)]:
                 self.captured.append(self.board[defender[0]][defender[1]])
                 for x in self.get_del(self.board[attacker[0]][attacker[1]].team,
                                       self.board[attacker[0]][attacker[1]].delegation):
@@ -287,7 +313,7 @@ class Board:
     def corp_dead(self, team, corps):
         for pieces in self.get_del(team, corps):
             self.board[pieces[0]][pieces[1]].delegation = "K"
-    
+
     #sets piece to the given corp if its legal
     def del_piece(self, piece, corps):
         if self.board[piece[0]][piece[1]].delegation == "K" and self.board[piece[0]][piece[1]].unit != "k":
@@ -297,7 +323,7 @@ class Board:
     def king_dead(self, team):
         self.state = abs(team - 1)
 
-    #switches the board to the next teams turn 
+    #switches the board to the next teams turn
     def end_turn(self):
         for x in self.board:
             for y in x:
@@ -381,8 +407,8 @@ class Board:
                     else:
                         print(0, end=" ")
                 print()
-     
-     def prob(self, attacker, defender):
-        value = self.attack_values.get([str(attacker.unit)+str(defender.unit)])
-        prob = value/6
+
+    def prob(self, attacker, defender):
+        value = self.attack_values[str(self.get_piece(attacker).unit) + str(self.get_piece(defender).unit)]
+        prob = value / 6
         return prob
