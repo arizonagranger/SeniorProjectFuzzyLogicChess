@@ -131,7 +131,21 @@ def update_game():
         # AI.test_future_move()
         # BOARD.end_turn()
         # RAI.ai_move()
-        AI2.test_future_move()
+        for x in AI2.test_future_move():
+            if len(x) == 4:
+                if x[3][0] == 0:
+                    print(BOARD.get_piece(x[1]).delegation," : moved ", x[0], " to ", x[1], " and attacked ", x[2], x[3][1])
+                else:
+                    print(BOARD.get_piece(x[2]).delegation, " : moved ", x[0], " to ", x[1], " and attacked ", x[2], x[3][1])
+            elif len(x) == 3:
+                if x[3][0] == 0:
+                    print(BOARD.get_piece(x[0]).delegation," : ", x[0], " attacked ", x[1], x[2][1])
+                elif BOARD.get_piece(x[0]) is None:
+                    print(BOARD.get_piece(x[1]).delegation, " : ", x[0], " attacked ", x[1], x[2][1])
+                else:
+                    print(BOARD.get_piece(x[0]).delegation, " : ", x[0], " attacked ", x[1], x[2][1])
+            else:
+                print(BOARD.get_piece(x[1]).delegation, " : moved ", x[0], " to ", x[1])
         BOARD.end_turn()
 
 
