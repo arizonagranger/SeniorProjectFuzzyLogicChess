@@ -155,7 +155,7 @@ class AI:
             probability = temp.prob(pieces.pop(0), piece)
             for x in pieces:
                 probability += (1-probability) * temp.prob(x, piece)
-            if self.board.get_piece(piece).unit == "K":
+            if self.board.get_piece(piece) is not None and self.board.get_piece(piece).unit == "K":
                 return temp.get_piece(piece).value * 10 * probability
             return temp.get_piece(piece).value * probability
         else:
