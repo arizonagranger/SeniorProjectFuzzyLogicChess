@@ -56,7 +56,7 @@ MOVE_LIST = []
 ATTACK_LIST = []
 # The list of moves made in the current turn
 # Made as a list of strings to support knight moves that overflow to next line
-MOVES = [["King: "], ["Left Bishop: "], ["Right Bishop: "]]
+MOVES = [["King:"], ["Left:"], ["Right:"]]
 
 # Dictionaries for replacing piece attributes with readable text
 TEAM = {0: "White", 1: "Black"}
@@ -177,7 +177,7 @@ def reset_state():
     # Clear attack list
     ATTACK_LIST = []
     # Clear actions made if turn wasn't completed
-    MOVES = [["King: "], ["Left Bishop: "], ["Right Bishop: "]]
+    MOVES = [["King:"], ["Left:"], ["Right:"]]
 
 
 # Actions that occur when the program is quitting
@@ -191,7 +191,7 @@ def quit_game():
 def ai_thread(turn):
     global AI_THREAD, PROCESSING, MOVES, PIECE
 
-    MOVES = [["King: "], ["Left Bishop: "], ["Right Bishop: "], [""]]
+    MOVES = [["King:"], ["Left:"], ["Right:"], [""]]
     if turn == 0:
         AI.test_future_move()
         reset_state()
@@ -265,7 +265,7 @@ def set_buttons():
     Button("Main", 84, 560, 216, 64, "AI Play", p.Color(180, 180, 180), p.Color(100, 100, 100), end_turn, [True])
     Button("Settings", 558, 560, 164, 64, "Close", p.Color(180, 180, 180), p.Color(100, 100, 100), change_menu, "Main")
     Button("EndGame", 980, 560, 216, 64, "Play Again", p.Color(180, 180, 180), p.Color(100, 100, 100), new_game)
-    # Button("Main", 20, 120, 40, 40, "Reset Turn", p.Color(180, 180, 180), p.Color(170, 170, 170), None)
+    # Button("Main", 20, 120, 40, 40, "Reset Turn", p.Color(180, 180, 180), p.Color(100, 100, 100), None)
 
 
 # Actions that are called to draw the UI onto the display
@@ -375,7 +375,7 @@ def draw_text():
     spacing = 0
     # Text objects (headers) that will be rendered (Text, x-position, y-position, font size)
     if CURRENT_MENU != "Settings":
-        text_objects = [("Medieval Fuzzy Logic Chess", 640, 50, 40), ("Dice Roll:", 1088, 320, 32), ("Moves:", 1088, 128, 32), ("Pieces Captured:", 192, 250, 32)]
+        text_objects = [("Medieval Fuzzy Logic Chess", 640, 50, 40), ("Dice Roll:", 1088, 320, 32), ("Moves:", 1088, 64, 32), ("Pieces Captured:", 192, 250, 32)]
         if CURRENT_MENU == "EndGame":
             text_objects.append(("GAME OVER:", 192, 500, 32))
             text_objects.append((TEAM[BOARD.state] + " Team Wins!", 192, 550, 32))
@@ -403,10 +403,12 @@ def draw_text():
     if CURRENT_MENU != "Settings":
         for move in MOVES:
             for text in move:
-                text_font = p.font.SysFont("Calibri", 18)
+                is_header = text == "" or text[-1] == ":"
+                text_font = p.font.SysFont("Calibri", 18, is_header)
+                text_font.set_underline(is_header)
                 text_obj = text_font.render(text, True, p.Color("black"))
                 text_size = text_obj.get_size()
-                SCREEN.blit(text_obj, (1088 - text_size[0] / 2, 160 - text_size[1] / 2 + spacing))
+                SCREEN.blit(text_obj, (1088 - text_size[0] / 2, 100 - text_size[1] / 2 + spacing))
                 # Add spacing between text ("newline")
                 spacing += text_size[1] + 5
             # Add spacing between text ("return")
@@ -452,10 +454,10 @@ def update_moves(action=-1, start_pos=[], end_pos=[], roll=DICE_ROLL):
     global MOVES
 
     del_index = {"K": 0, "L": 1, "R": 2}
-    del_name = {"K": "King", "L": "Left Bishop", "R": "Right Bishop"}
+    del_name = {"K": "King", "L": "Left", "R": "Right"}
 
     if len(MOVES) != 3 and PIECE.team == 0:
-        MOVES = [["King: "], ["Left Bishop: "], ["Right Bishop: "]]
+        MOVES = [["King:"], ["Left:"], ["Right:"]]
 
     # Check if piece exists
     if PIECE is not None:
@@ -465,32 +467,34 @@ def update_moves(action=-1, start_pos=[], end_pos=[], roll=DICE_ROLL):
 
         # Move action
         if action == 0:
-            if move_list[0] != del_name[delegation] + ": ":
+            if len(move_list) != 1:
                 move_list[len(move_list) - 1] += " and"
                 move_list.append("moved " + get_notation(start_pos) + " to " + get_notation(end_pos))
             else:
-                move_list[0] = del_name[delegation] + ": Moved " + get_notation(start_pos) + " to " + get_notation(end_pos)
+                move_list.append("Moved " + get_notation(start_pos) + " to " + get_notation(end_pos))
         # Successful attack action
         elif action == 1:
             # Check if this piece is a knight attacking after moving
-            if PIECE.unit == "n" and move_list[0] != del_name[delegation] + ": ":
-                move_list.append("and successfully attacked " + get_notation(end_pos) + " (" + str(roll) + ")")
+            if PIECE.unit == "n" and len(move_list) != 1:
+                move_list[len(move_list) - 1] += " and"
+                move_list.append("attacked " + get_notation(end_pos) + " (" + str(roll) + ")")
             else:
-                move_list[0] = del_name[delegation] + ": " + get_notation(start_pos) + " successfully attacked " + get_notation(end_pos) + " (" + str(roll) + ")"
+                move_list.append(get_notation(start_pos) + " attacked " + get_notation(end_pos) + " (" + str(roll) + ")")
         # Unsuccessful attack action
         elif action == 2:
             # Check if this piece is a knight attacking after moving
-            if PIECE.unit == "n" and move_list[0] != del_name[delegation] + ": ":
-                move_list.append("and failed to attack " + get_notation(end_pos) + " (" + str(roll) + ")")
+            if PIECE.unit == "n" and len(move_list) != 1:
+                move_list[len(move_list) - 1] += " and"
+                move_list.append("failed to attack " + get_notation(end_pos) + " (" + str(roll) + ")")
             else:
-                move_list[0] = del_name[delegation] + ": " + get_notation(start_pos) + " failed to attack " + get_notation(end_pos) + " (" + str(roll) + ")"
+                move_list.append(get_notation(start_pos) + " failed to attack " + get_notation(end_pos) + " (" + str(roll) + ")")
         # Delegate action
         elif action == 3:
-            if move_list[0] != del_name[delegation] + ": ":
+            if len(move_list) != 1:
                 move_list[len(move_list) - 1] += " and"
                 move_list.append("delegated " + get_notation(start_pos) + " to " + del_name[BOARD.get_piece(end_pos).delegation])
             else:
-                move_list[0] = del_name[delegation] + ": Delegated " + get_notation(start_pos) + " to " + del_name[BOARD.get_piece(end_pos).delegation]
+                move_list.append("Delegated " + get_notation(start_pos) + " to " + del_name[BOARD.get_piece(end_pos).delegation])
 
 
 def mouse_event(event):
