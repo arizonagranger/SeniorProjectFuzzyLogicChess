@@ -259,12 +259,12 @@ def load_images():
 
 # Creates buttons and adds them to buttons list so that they can be called on mouse clicks
 def set_buttons():
-    Button("Main", 20, 20, 40, 40, "New Game", p.Color(180, 180, 180), p.Color(170, 170, 170), new_game)
-    Button("Main", 20, 70, 40, 40, "Settings", p.Color(180, 180, 180), p.Color(170, 170, 170), change_menu, "Settings")
-    Button("Main", 980, 560, 216, 64, "End Turn", p.Color(180, 180, 180), p.Color(170, 170, 170), end_turn)
-    Button("Main", 84, 560, 216, 64, "AI Play", p.Color(180, 180, 180), p.Color(170, 170, 170), end_turn, [True])
-    Button("Settings", 558, 560, 164, 64, "Close", p.Color(180, 180, 180), p.Color(170, 170, 170), change_menu, "Main")
-    Button("EndGame", 980, 560, 216, 64, "Play Again", p.Color(180, 180, 180), p.Color(170, 170, 170), new_game)
+    Button("Main", 20, 20, 40, 40, "New Game", p.Color(180, 180, 180), p.Color(100, 100, 100), new_game)
+    Button("Main", 20, 70, 40, 40, "Settings", p.Color(180, 180, 180), p.Color(100, 100, 100), change_menu, "Settings")
+    Button("Main", 980, 560, 216, 64, "End Turn", p.Color(180, 180, 180), p.Color(100, 100, 100), end_turn)
+    Button("Main", 84, 560, 216, 64, "AI Play", p.Color(180, 180, 180), p.Color(100, 100, 100), end_turn, [True])
+    Button("Settings", 558, 560, 164, 64, "Close", p.Color(180, 180, 180), p.Color(100, 100, 100), change_menu, "Main")
+    Button("EndGame", 980, 560, 216, 64, "Play Again", p.Color(180, 180, 180), p.Color(100, 100, 100), new_game)
     # Button("Main", 20, 120, 40, 40, "Reset Turn", p.Color(180, 180, 180), p.Color(170, 170, 170), None)
 
 
