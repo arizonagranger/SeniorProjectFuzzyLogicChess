@@ -267,7 +267,7 @@ class AI:
                 if move[1][0] > best[1][0]:
                     best = move
             corps.remove(self.board.get_piece(best[0]).delegation)
-            if move[1][1][0] == 1:
+            if best[1][1][0] == 1:
                 moves_taken.append([best[0], best[1][1][1], self.board.attack(best[0], best[1][1][1])])
             else:
                 self.board.move(best[0], best[1][1][1])
