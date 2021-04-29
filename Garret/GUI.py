@@ -3,6 +3,7 @@ import Board as Board
 import RandomAI as RandAI
 import AI as ai
 import random
+import time
 import threading
 
 # The resolution of the main window (16:9)
@@ -67,7 +68,9 @@ DELEGATION = {"K": "King", "L": "Left Bishop", "R": "Right Bishop"}
 GAME_RUNNING = True
 
 AI_THREAD = None
+DICE_THREAD = None
 PROCESSING = False
+IS_ROLLING = False
 
 
 def main():
@@ -557,10 +560,11 @@ def mouse_event(event):
                     # print((AI.corps[BOARD.get_piece(PIECE_COORDS).delegation].get_future_moves()))
                     # AI.testing_stuff()
                 # Reset piece
-                PIECE_COORDS = []
-                PIECE = None
-                MOVE_LIST = []
-                ATTACK_LIST = []
+                if not IS_ROLLING:
+                    PIECE_COORDS = []
+                    PIECE = None
+                    MOVE_LIST = []
+                    ATTACK_LIST = []
         # If left-click on button
         elif len(selected_button) != 0 and event.button == 1 and selected_button[0].func is not None:
             # Call action on button
@@ -631,22 +635,11 @@ def move_piece(coords):
 
 
 def attack_piece(coords):
-    global DICE_ROLL
+    global DICE_THREAD
 
-    # Perform attack action
-    roll = BOARD.attack(PIECE_COORDS, coords)
-
-    # Check if attack was valid
-    if roll[1] != 0:
-        # Update dice roll number to update dice image
-        DICE_ROLL = roll[1]
-        # Check if attack was successful and add action to moves list
-        if roll[0] == 1:
-            # Success
-            update_moves(1, PIECE_COORDS, coords)
-        else:
-            # Failure
-            update_moves(2, PIECE_COORDS,  coords)
+    # Start thread that will perform the attack action
+    DICE_THREAD = threading.Thread(target=randomize_dice, args=[coords])
+    DICE_THREAD.start()
 
 
 def delegate_piece(coords):
@@ -657,6 +650,37 @@ def delegate_piece(coords):
         # Add action to moves list
         update_moves(3, PIECE_COORDS, coords)
 
+
+def randomize_dice(coords):
+    global PIECE_COORDS, PIECE, MOVE_LIST, ATTACK_LIST, DICE_ROLL, DICE_THREAD, IS_ROLLING
+
+    IS_ROLLING = True
+    # Update dice roll number to update dice image
+    for _ in range(16):
+        DICE_ROLL = random.randint(1, 6)
+        time.sleep(0.0625)
+
+    # Perform attack action
+    roll = BOARD.attack(PIECE_COORDS, coords)
+
+    DICE_ROLL = roll[1]
+    # Check if attack was valid
+    if roll[1] != 0:
+        # Check if attack was successful and add action to moves list
+        if roll[0] == 1:
+            # Success
+            update_moves(1, PIECE_COORDS, coords)
+        else:
+            # Failure
+            update_moves(2, PIECE_COORDS, coords)
+
+    PIECE_COORDS = []
+    PIECE = None
+    MOVE_LIST = []
+    ATTACK_LIST = []
+
+    DICE_THREAD = False
+    IS_ROLLING = False
 
 # Returns the coordinate on the chess board in chess notation (e.g. [0, 0] -> "A1")
 def get_notation(coords):
