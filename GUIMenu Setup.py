@@ -40,8 +40,8 @@ def mainMenu():
 
         # Buttons to use
         Button("Play", int(WIDTH/2 -250), 450, 100, 50, p.Color(180, 180, 180), p.Color(100, 100, 100), start_game())
-        Button("Credits", int(WIDTH/2 -50), 450, 100, 50, p.Color(180, 180, 180), p.Color(100, 100, 100), creditScreen()) # Positioning, color, we also need a credit screen
-        Button("Rules", int(WIDTH/2 -250), 450, 100, 50, p.Color(180, 180, 180), p.Color(100, 100, 100), ruleScreen()) # Positioning, color, rules screen
+        Button("Credits", int(WIDTH/2 -50), 450, 100, 50, p.Color(180, 180, 180), p.Color(100, 100, 100), creditScreen())
+        Button("Rules", int(WIDTH/2 +150), 450, 100, 50, p.Color(180, 180, 180), p.Color(100, 100, 100), ruleScreen())
 
         # clock.tick(MAX_FPS)
         p.display.flip()
