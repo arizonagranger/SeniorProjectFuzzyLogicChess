@@ -5,6 +5,7 @@ import random
 class Board:
 
     def __init__(self, boardString):
+
         self.counter = 0
         self.board = []
         self.captured = []
@@ -272,11 +273,13 @@ class Board:
         if self.board[attacker[0]][attacker[1]] is not None and defender in self.get_attacks(attacker):
             roll = random.randrange(1, 7)
             if self.board[attacker[0]][attacker[1]].unit == "n" and not self.board[attacker[0]][attacker[1]].move:
-                roll -= 1
+                knightroll = 1
+            else:
+                knightroll = 0
             for pieces in self.get_del(self.get_piece(attacker).team, self.get_piece(attacker).delegation):
                 self.get_piece(pieces).move = False
                 self.get_piece(pieces).attack = False
-            if roll >= self.attack_values[str(self.board[attacker[0]][attacker[1]].unit) + str(self.board[defender[0]][defender[1]].unit)]:
+            if (roll - knightroll) >= self.attack_values[str(self.board[attacker[0]][attacker[1]].unit) + str(self.board[defender[0]][defender[1]].unit)]:
                 self.captured.append(self.board[defender[0]][defender[1]])
                 for x in self.get_del(self.board[attacker[0]][attacker[1]].team,
                                       self.board[attacker[0]][attacker[1]].delegation):
@@ -318,8 +321,6 @@ class Board:
     def del_piece(self, piece, corps):
         if self.board[piece[0]][piece[1]].delegation == "K" and self.board[piece[0]][piece[1]].unit != "k":
             self.board[piece[0]][piece[1]].delegation = corps
-            self.board[piece[0]][piece[1]].move = False
-            self.board[piece[0]][piece[1]].attack = False
 
     #activates if king is dead
     def king_dead(self, team):
